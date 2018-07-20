@@ -36,6 +36,7 @@
 # define SHINE_DLL_FARPROC void*
 #endif
 
+#include "../net/socket.hpp"
 
 using namespace std;
 

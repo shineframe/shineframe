@@ -31,7 +31,6 @@
 #include <thread>
 #include <memory>
 #include "../common/define.hpp"
-#include "../net/socket.hpp"
 #include "mysql_helper.hpp"
 
 #if (defined SHINE_OS_WINDOWS)
