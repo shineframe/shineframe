@@ -49,6 +49,7 @@
 #include <iostream>
 namespace shine
 {
+    typedef bool Bool;
     typedef char int8;
     typedef unsigned char  uint8;
     typedef short  int16;
@@ -59,35 +60,13 @@ namespace shine
     typedef unsigned long  uLong;
     typedef long long  int64;
     typedef unsigned long long  uint64;
-
+    typedef float Float;
+    typedef double Double;
+    typedef long double LDouble;
     typedef std::size_t size_t;
     typedef size_t size_type;
 
 }
 
-#define MACRO_EMPTY
-
-#define SHINE_GEN_MEMBER_GET_METHOD(type, name, ...) public: \
-    inline type& get_##name() { return _##name; } \
-    inline const type& get_##name() const { return _##name; }
-
-#define SHINE_GEN_MEMBER_SET_METHOD(type, name, prefix, ...) public: \
-    template<typename T> \
-    inline void prefix##_##name(const T &val) { _##name = val; } \
-    template<typename T> \
-    inline void prefix##_##name(T &&val) { _##name = val; }
-
-#define SHINE_GEN_MEMBER_BODY(type, name, ...) protected: \
-    type _##name  __VA_ARGS__;
-
-#define SHINE_GEN_MEMBER_GETSET(type, name, ...) SHINE_GEN_MEMBER_GET_METHOD(type, name); \
-    SHINE_GEN_MEMBER_SET_METHOD(type, name, set); \
-    SHINE_GEN_MEMBER_BODY(type, name, __VA_ARGS__);
-
-#define SHINE_GEN_MEMBER_GETREG(type, name, ...) SHINE_GEN_MEMBER_GET_METHOD(type, name); \
-    SHINE_GEN_MEMBER_SET_METHOD(type, name, register); \
-    SHINE_GEN_MEMBER_BODY(type, name, __VA_ARGS__);
-
-#define SHINE_GEN_MEMBER_GET_ONLY(type, name, ...) SHINE_GEN_MEMBER_GET_METHOD(type, name); \
-    SHINE_GEN_MEMBER_BODY(type, name, __VA_ARGS__);
+#include "macros.hpp"
 

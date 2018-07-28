@@ -42,119 +42,16 @@
 #include "type_traits.hpp"
 #include "string.hpp"
 
-#define MARCO_EXPAND(...) __VA_ARGS__
-#define MAKE_ARG_LIST_1(op, arg, ...)   op(arg)
-#define MAKE_ARG_LIST_2(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_1(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_3(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_2(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_4(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_3(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_5(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_4(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_6(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_5(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_7(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_6(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_8(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_7(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_9(op, arg, ...)   op(arg) MARCO_EXPAND(MAKE_ARG_LIST_8(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_10(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_9(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_11(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_10(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_12(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_11(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_13(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_12(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_14(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_13(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_15(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_14(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_16(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_15(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_17(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_16(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_18(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_17(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_19(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_18(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_20(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_19(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_21(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_20(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_22(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_21(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_23(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_22(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_24(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_23(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_25(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_24(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_26(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_25(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_27(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_26(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_28(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_27(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_29(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_28(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_30(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_29(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_31(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_30(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_32(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_31(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_33(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_32(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_34(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_33(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_35(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_34(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_36(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_35(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_37(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_36(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_38(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_37(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_39(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_38(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_40(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_39(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_41(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_40(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_42(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_41(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_43(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_42(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_44(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_43(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_45(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_44(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_46(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_45(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_47(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_46(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_48(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_47(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_49(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_48(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_50(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_49(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_51(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_50(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_52(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_51(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_53(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_52(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_54(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_53(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_55(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_54(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_56(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_55(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_57(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_56(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_58(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_57(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_59(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_58(op, __VA_ARGS__))
-#define MAKE_ARG_LIST_60(op, arg, ...)  op(arg) MARCO_EXPAND(MAKE_ARG_LIST_59(op, __VA_ARGS__))
+#define JSON_GEN_ENCODE_FUNC(N, ...) \
+    MARCO_EXPAND_WARP(MAKE_ARG_LIST(N, JSON_ENCODE_FIELD, __VA_ARGS__))
 
-#define GEN_ENCODE_OBJECT(...) MARCO_EXPAND(__VA_ARGS__)
-#define GEN_DECODE_OBJECT(...) MARCO_EXPAND(__VA_ARGS__)
+#define JSON_GEN_DECODE_FUNC(N, ...) \
+    MARCO_EXPAND_WARP(MAKE_ARG_LIST(N, JSON_DECODE_FIELD, __VA_ARGS__))
 
-#define MACRO_CONCAT(A, B)  A##_##B
+#define JSON_ENCODE(...) JSON_GEN_ENCODE_FUNC(GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
+#define JSON_DECODE(...) JSON_GEN_DECODE_FUNC(GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
 
-#define MAKE_ARG_LIST(N, op, arg, ...) \
-    MACRO_CONCAT(MAKE_ARG_LIST, N)(op, arg, __VA_ARGS__)
-
-#define GEN_ENCODE_FUNC(N, ...) \
-    GEN_ENCODE_OBJECT(MAKE_ARG_LIST(N, ENCODE_FIELD, __VA_ARGS__))
-
-#define GEN_DECODE_FUNC(N, ...) \
-    GEN_DECODE_OBJECT(MAKE_ARG_LIST(N, DECODE_FIELD, __VA_ARGS__))
-
-#define RSEQ_N() \
-    119, 118, 117, 116, 115, 114, 113, 112, 111, 110, \
-    109, 108, 107, 106, 105, 104, 103, 102, 101, 100, \
-    99, 98, 97, 96, 95, 94, 93, 92, 91, 90, \
-    89, 88, 87, 86, 85, 84, 83, 82, 81, 80, \
-    79, 78, 77, 76, 75, 74, 73, 72, 71, 70, \
-    69, 68, 67, 66, 65, 64, 63, 62, 61, 60, \
-    59, 58, 57, 56, 55, 54, 53, 52, 51, 50, \
-    49, 48, 47, 46, 45, 44, 43, 42, 41, 40, \
-    39, 38, 37, 36, 35, 34, 33, 32, 31, 30, \
-    29, 28, 27, 26, 25, 24, 23, 22, 21, 20, \
-    19, 18, 17, 16, 15, 14, 13, 12, 11, 10, \
-    9, 8, 7, 6, 5, 4, 3, 2, 1, 0
-
-#define ARG_N( \
-    _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, \
-    _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, \
-    _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, \
-    _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, \
-    _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, \
-    _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, \
-    _61, _62, _63, _64, _65, _66, _67, _68, _69, _70, \
-    _71, _72, _73, _74, _75, _76, _77, _78, _79, _80, \
-    _81, _82, _83, _84, _85, _86, _87, _88, _89, _90, \
-    _91, _92, _93, _94, _95, _96, _97, _98, _99, _100, \
-    _101, _102, _103, _104, _105, _106, _107, _108, _109, _110, \
-    _111, _112, _113, _114, _115, _116, _117, _118, _119, N, ...) N
-
-#define GET_ARG_COUNT_INNER(...)    MARCO_EXPAND(ARG_N(__VA_ARGS__))
-#define GET_ARG_COUNT(...)          GET_ARG_COUNT_INNER(__VA_ARGS__, RSEQ_N())
-
-#define JSON_ENCODE(...) GEN_ENCODE_FUNC(GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
-#define JSON_DECODE(...) GEN_DECODE_FUNC(GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
-
-#define  SHINE_JSON_ENCODE(...) SHINE_JSON_ENCODE(__VA_ARGS__)
-
-#define SHINE_JSON_MODEL(TYPE, ...) shine::string encode(){\
+#define SHINE_JSON_MODEL(TYPE, ...) shine::string json_encode(){\
     shine::string ret = "{"; \
     bool empty = true; \
     JSON_ENCODE(__VA_ARGS__); \
@@ -162,7 +59,7 @@
     return ret; \
     }\
     \
-    bool decode(const shine::string &str){\
+    bool json_decode(const shine::string &str){\
     shine::json json;\
     if (!json.decode(str))  return false;\
     shine::json_node_t *node = &json.get_root();\
@@ -170,13 +67,13 @@
     return true; \
     } \
     \
-    bool decode(shine::json_node_t *node){\
+    bool json_decode(shine::json_node_t *node){\
     JSON_DECODE(__VA_ARGS__); \
     return true; \
     }}; \
-    inline shine::string encode_field(TYPE &val){return val.encode();}\
-    inline void decode_field(TYPE &val, shine::json_node_t *node){\
-        val.decode(node);
+    inline shine::string json_encode_field(TYPE &val){ return val.json_encode(); }\
+    inline void json_decode_field(TYPE &val, shine::json_node_t *node){\
+    val.json_decode(node);
 
 namespace shine
 {
@@ -783,36 +680,36 @@ namespace shine
 }
 
 
-#define ENCODE_FIELD(field) \
+#define JSON_ENCODE_FIELD(field) \
 { \
-    shine::string tmp = ::encode_field(field); \
+    shine::string tmp = ::json_encode_field(field); \
 if (!tmp.empty())\
     {\
 if (!empty) ret += ","; \
     ret += "\""; \
     ret += #field; \
     ret += "\":"; \
-    ret += ::encode_field(field); \
+    ret += tmp; \
     empty = false; \
 }\
 };
 
-#define DECODE_FIELD(field) {\
+#define JSON_DECODE_FIELD(field) {\
     shine::json_node_t *node2 = node->find_kv_child(#field);\
-    if (node2) ::decode_field(field, node2);\
+    if (node2) ::json_decode_field(field, node2); \
 }
 
-inline shine::string encode_field(bool val){
+inline shine::string json_encode_field(bool val){
     shine::string ret = val ? "true" : "false";
     return ret;
 }
 
-inline void decode_field(bool &val, shine::json_node_t *node){
+inline void json_decode_field(bool &val, shine::json_node_t *node){
     val = node->get_value() == "true";
 }
 
-#define ENCODE_STRING_FIELD(TYPE) \
-    inline shine::string encode_field(const TYPE &val){\
+#define JSON_ENCODE_STRING_FIELD(TYPE) \
+    inline shine::string json_encode_field(const TYPE &val){\
         shine::string ret; \
         shine::json_node_t::encode_string(ret, val); \
         ret.insert(0, "\""); \
@@ -820,17 +717,17 @@ inline void decode_field(bool &val, shine::json_node_t *node){
         return ret; \
     }
 
-ENCODE_STRING_FIELD(shine::string);
-inline void decode_field(shine::string &val, shine::json_node_t *node){
+JSON_ENCODE_STRING_FIELD(shine::string);
+inline void json_decode_field(shine::string &val, shine::json_node_t *node){
     val = node->get_value();
 }
 
-ENCODE_STRING_FIELD(std::string);
-inline void decode_field(std::string &val, shine::json_node_t *node){
+JSON_ENCODE_STRING_FIELD(std::string);
+inline void json_decode_field(std::string &val, shine::json_node_t *node){
     val = node->get_value();
 }
 
-inline shine::string encode_field(const shine::int8 &val){
+inline shine::string json_encode_field(const shine::int8 &val){
         shine::string ret; 
         ret += "\"";
         ret += val;
@@ -838,85 +735,85 @@ inline shine::string encode_field(const shine::int8 &val){
         return ret; 
 }
 
-inline void decode_field(shine::int8 &val, shine::json_node_t *node){
+inline void json_decode_field(shine::int8 &val, shine::json_node_t *node){
         val = node->get_value()[0];
 }
 
-ENCODE_STRING_FIELD(shine::int8*);
-inline void decode_field(shine::int8 *&val, shine::json_node_t *node){
+JSON_ENCODE_STRING_FIELD(shine::int8*);
+inline void json_decode_field(shine::int8 *&val, shine::json_node_t *node){
     val = (shine::int8 *)node->get_value().c_str();
 }
 
-#define ENCODE_NUMERIC_FIELD(TYPE) \
-    inline shine::string encode_field(const TYPE &val){\
+#define JSON_ENCODE_NUMERIC_FIELD(TYPE) \
+    inline shine::string json_encode_field(const TYPE &val){\
         return shine::string(val); \
     }
 
-ENCODE_NUMERIC_FIELD(shine::int16);
-inline void decode_field(shine::int16 &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::int16);
+inline void json_decode_field(shine::int16 &val, shine::json_node_t *node){
     val = (shine::int16)std::stol(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(shine::uint16);
-inline void decode_field(shine::uint16 &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::uint16);
+inline void json_decode_field(shine::uint16 &val, shine::json_node_t *node){
     val = (shine::uint16)std::stoul(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(shine::int32);
-inline void decode_field(shine::int32 &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::int32);
+inline void json_decode_field(shine::int32 &val, shine::json_node_t *node){
     val = std::stol(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(shine::uint32);
-inline void decode_field(shine::uint32 &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::uint32);
+inline void json_decode_field(shine::uint32 &val, shine::json_node_t *node){
     val = std::stoul(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(shine::Long);
-inline void decode_field(shine::Long &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::Long);
+inline void json_decode_field(shine::Long &val, shine::json_node_t *node){
     val = std::stol(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(shine::uLong);
-inline void decode_field(shine::uLong &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::uLong);
+inline void json_decode_field(shine::uLong &val, shine::json_node_t *node){
     val = std::stoul(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(shine::int64);
-inline void decode_field(shine::int64 &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::int64);
+inline void json_decode_field(shine::int64 &val, shine::json_node_t *node){
     val = std::stoll(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(shine::uint64);
-inline void decode_field(shine::uint64 &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::uint64);
+inline void json_decode_field(shine::uint64 &val, shine::json_node_t *node){
     val = std::stoull(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(float);
-inline void decode_field(float &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::Float);
+inline void json_decode_field(shine::Float &val, shine::json_node_t *node){
     val = std::stof(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(double);
-inline void decode_field(double &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::Double);
+inline void json_decode_field(shine::Double &val, shine::json_node_t *node){
     val = std::stod(node->get_value());
 }
 
-ENCODE_NUMERIC_FIELD(long double);
-inline void decode_field(long double &val, shine::json_node_t *node){
+JSON_ENCODE_NUMERIC_FIELD(shine::LDouble);
+inline void json_decode_field(shine::LDouble &val, shine::json_node_t *node){
     val = std::stold(node->get_value());
 }
 
-#define ENCODE_MAP_FIELD(TYPE) \
+#define JSON_ENCODE_MAP_FIELD(TYPE) \
     template<typename T1, typename T2>\
-    inline shine::string encode_field(TYPE<T1, T2> &val){\
+    inline shine::string json_encode_field(TYPE<T1, T2> &val){\
 if (val.empty()) return ""; \
     shine::string ret = "{"; \
     bool empty = true; \
 for (auto &iter : val)\
 {\
-    shine::string k = "\"" + encode_field(iter.first) + "\""; \
-    shine::string v = encode_field(iter.second); \
+    shine::string k = "\"" + json_encode_field(iter.first) + "\""; \
+    shine::string v = json_encode_field(iter.second); \
 if (!v.empty())\
 {\
 if (!empty)\
@@ -935,36 +832,36 @@ if (!empty)\
     }
 
 
-#define DECODE_MAP_FIELD(TYPE) \
+#define JSON_DECODE_MAP_FIELD(TYPE) \
     template<typename T1, typename T2>\
-    inline void decode_field(TYPE<T1, T2> &val, shine::json_node_t *node){\
+    inline void json_decode_field(TYPE<T1, T2> &val, shine::json_node_t *node){\
     node->foreach_kv_childs([&val](const shine::string &key, const shine::json_node_t &value){\
         shine::json_node_t tmp;\
         tmp.set_string(key);\
         T1 k;\
         T2 v;\
-        decode_field(k, (shine::json_node_t *)&tmp); \
-        decode_field(v, (shine::json_node_t *)&value); \
+        json_decode_field(k, (shine::json_node_t *)&tmp); \
+        json_decode_field(v, (shine::json_node_t *)&value); \
         val.emplace(std::move(k), std::move(v));\
     }); \
     }
 
 
-ENCODE_MAP_FIELD(std::map);
-DECODE_MAP_FIELD(std::map);
+JSON_ENCODE_MAP_FIELD(std::map);
+JSON_DECODE_MAP_FIELD(std::map);
 
-ENCODE_MAP_FIELD(std::unordered_map);
-DECODE_MAP_FIELD(std::unordered_map);
+JSON_ENCODE_MAP_FIELD(std::unordered_map);
+JSON_DECODE_MAP_FIELD(std::unordered_map);
 
-#define ENCODE_ARRAY_FIELD(TYPE) \
+#define JSON_ENCODE_ARRAY_FIELD(TYPE) \
     template<typename T>\
-    inline shine::string encode_field(TYPE<T> &val){\
+    inline shine::string json_encode_field(TYPE<T> &val){\
 if (val.empty()) return ""; \
     shine::string ret = "["; \
     bool empty = true; \
 for (auto &iter : val)\
 {\
-    shine::string v = encode_field(iter); \
+    shine::string v = json_encode_field(iter); \
 if (!v.empty())\
 {\
 if (!empty)\
@@ -981,52 +878,52 @@ if (!empty)\
     }
 
 
-#define DECODE_ARRAY_FIELD(TYPE) \
+#define JSON_DECODE_ARRAY_FIELD(TYPE) \
     template<typename T>\
-    inline void decode_field(TYPE<T> &val, shine::json_node_t *node){\
+    inline void json_decode_field(TYPE<T> &val, shine::json_node_t *node){\
     node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){\
     T v;\
-    ::decode_field(v, (shine::json_node_t *)&value); \
+    ::json_decode_field(v, (shine::json_node_t *)&value); \
     val.emplace_back(std::move(v)); \
     }); \
     }
 
-ENCODE_ARRAY_FIELD(std::vector);
-DECODE_ARRAY_FIELD(std::vector);
+JSON_ENCODE_ARRAY_FIELD(std::vector);
+JSON_DECODE_ARRAY_FIELD(std::vector);
 
-ENCODE_ARRAY_FIELD(std::deque);
-DECODE_ARRAY_FIELD(std::deque);
+JSON_ENCODE_ARRAY_FIELD(std::deque);
+JSON_DECODE_ARRAY_FIELD(std::deque);
 
-ENCODE_ARRAY_FIELD(std::list);
-DECODE_ARRAY_FIELD(std::list);
+JSON_ENCODE_ARRAY_FIELD(std::list);
+JSON_DECODE_ARRAY_FIELD(std::list);
 
-ENCODE_ARRAY_FIELD(std::forward_list);
+JSON_ENCODE_ARRAY_FIELD(std::forward_list);
 
 template<typename T>
-inline void decode_field(std::forward_list<T> &val, shine::json_node_t *node){
+inline void json_decode_field(std::forward_list<T> &val, shine::json_node_t *node){
         node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){
         T v; 
-        ::decode_field(v, (shine::json_node_t *)&value);
+        ::json_decode_field(v, (shine::json_node_t *)&value);
         val.emplace_front(std::move(v));
     }); 
 }
 
-#define ENCODE_SET_FIELD(TYPE) ENCODE_ARRAY_FIELD(TYPE)
+#define JSON_ENCODE_SET_FIELD(TYPE) JSON_ENCODE_ARRAY_FIELD(TYPE)
 
 
-#define DECODE_SET_FIELD(TYPE) \
+#define JSON_DECODE_SET_FIELD(TYPE) \
     template<typename T>\
-    inline void decode_field(TYPE<T> &val, shine::json_node_t *node){\
+    inline void json_decode_field(TYPE<T> &val, shine::json_node_t *node){\
     node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){\
     T v;\
-    ::decode_field(v, (shine::json_node_t *)&value); \
+    ::json_decode_field(v, (shine::json_node_t *)&value); \
     val.emplace(std::move(v)); \
     }); \
     }
 
-ENCODE_SET_FIELD(std::set);
-DECODE_SET_FIELD(std::set);
+JSON_ENCODE_SET_FIELD(std::set);
+JSON_DECODE_SET_FIELD(std::set);
 
-ENCODE_SET_FIELD(std::unordered_set);
-DECODE_SET_FIELD(std::unordered_set);
+JSON_ENCODE_SET_FIELD(std::unordered_set);
+JSON_DECODE_SET_FIELD(std::unordered_set);
 

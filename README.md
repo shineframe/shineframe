@@ -14,8 +14,89 @@ github：[https://github.com/shineframe/shineframe](https://github.com/shinefram
 
 ## 二、库组成 ##
 
-### 2.1 util 工具 ###
-#### 2.1.1 json 强大的json工具 ####
+
+### serial 媲美protobuf的强大序列化/反序列化工具 ###
+
+序列化工具，支持c++原生对象的序列化与反序列化，是网络自定义协议格式应用的开发利器。
+
+serial运行效率高于google protobuf,提供与protobuf相似的序列化特性，如：数值压缩编码，类似于varint,序列化后体积极小，当字段为0或者为空时不占用任何空间。serial支持协议向前兼容（当有无法识别的新字段时会自动略过），同时serial支持比protobuf更丰富强大的数据类型，基本的数据类型及STL标准容器字段均可进行序列化，支持结构嵌套（注:嵌套的结构体一定也要以SHINE_SERIAL_MODEL宏修饰，否则不支持，编译不通过）
+
+serial_model操作示例（一行代码实现c++原生对象的序列化与反序列化）：
+
+	
+	#include <iostream>
+	#include "util/json.hpp"
+	#include "serial/serial.hpp"
+	
+	using namespace shine;
+	
+	struct B
+	{
+	    int a;
+	    double b;
+	    std::string c;
+	    SHINE_SERIAL_MODEL(B, a, b, c);
+	};
+	
+	struct A{
+	    int a;
+	    double b;
+	    std::string c;
+	
+	    std::map<int, B> d;
+	    std::list<int> e;
+	    std::vector<float> f;
+	    std::deque<double> g;
+	    std::forward_list<long> h;
+	    std::set<shine::string> i;
+	
+	    SHINE_SERIAL_MODEL(A, a, b, c, d, e, f, g, h, i);
+	};
+	
+	int main(){
+	
+	    A a;
+	    a.a = 123;
+	    a.b = 345.567;
+	    a.c = "hello world!";
+	
+	    B b;
+	
+	    b.a = 666;
+	    b.b = 777.7777;
+	    b.c = "999999!";
+	
+	    a.d.emplace(999, b);
+	
+	    a.e.emplace_back(123);
+	    a.e.emplace_back(345);
+	
+	    a.f.emplace_back((float)12.34);
+	    a.f.emplace_back((float)45.67);
+	
+	    a.g.emplace_back((double)456.789);
+	    a.g.emplace_back((double)78.9);
+	
+	    a.h.emplace_front(666);
+	    a.h.emplace_front(555);
+	
+	    a.i.emplace("A");
+	    a.i.emplace("B");
+	    a.i.emplace("C");
+	
+	    //将对象a序列化成字节流
+	    auto data = a.serial_encode();
+	
+	    //将字节流反序列化成对象，反序列化后a2与a中数据相同
+	    A a2;
+	    a2.serial_decode(data);
+	
+	    return 0;
+	}
+
+
+
+### json 强大的json工具 ###
 
 json解析类，支持字符串与json对象的互转，另外支持json字符串与c++原生对象的互转，是json协议格式应用的开发利器。
 
@@ -23,7 +104,7 @@ json_model操作示例（一行代码实现json字符串与c++原生对象的互
 
 	
 	#include <iostream>
-	#include "../json.hpp"
+	#include "util/json.hpp"
 	
 	using namespace shine;
 	
@@ -50,7 +131,7 @@ json_model操作示例（一行代码实现json字符串与c++原生对象的互
 	    SHINE_JSON_MODEL(A, a, b, c, d, e, f, g, h, i);
 	};
 	
-	int json_model_main(){
+	int main(){
 	
 	    A a;
 	    a.a = 123;
@@ -82,11 +163,11 @@ json_model操作示例（一行代码实现json字符串与c++原生对象的互
 	    a.i.emplace("C");
 	
 	    //将对象a编码成json字符串
-	    auto a_str = a.encode();
+	    auto a_str = a.json_encode();
 	
 	    //将json字符串解码成对象，解码后a2与a中数据相同
 	    A a2;
-	    a2.decode(a_str);
+	    a2.json_decode(a_str);
 	
 	    return 0;
 	}
@@ -161,16 +242,15 @@ json基本操作示例：
 	}
 
 
-#### 2.1.2 string 字符串封装 ####
+### string 字符串封装 ###
 
-#### 2.1.3 log 简单的日志实现 ####
+### log 简单的日志实现 ###
 
-#### 2.1.4 timer 定时器实现 ####
+### timer 定时器实现 ###
 
-#### 2.1.5 pool 简单的对象池实现 ####
+### pool 简单的对象池实现 ###
 
-
-### 2.3 redis redis客户端封装 ###
+### redis redis客户端封装 ###
 目前只实现了同步式请求，异步式请求与请求/发布功能待完善。
 
 简单同步客户端代码示例：
@@ -223,7 +303,7 @@ json基本操作示例：
 	}
 
 
-### 2.3 net 网络封装 ###
+### net 网络封装 ###
 主要封装了socket操作，提供proactor风格非阻塞套接字操作。
 
 echo服务端示例：
@@ -340,7 +420,7 @@ echo客户端示例：
 	}
 
 
-### 2.4 http http服务端/客户端封装 ###
+### http http服务端/客户端封装 ###
 
 http_base_server示例：
 
@@ -432,7 +512,7 @@ http_base_client抓取页面示例：
 	    return 0;
 	}
 
-### 2.5 mysql封装 ###
+### mysql封装 ###
 封装了mysql c api，提供常用的数据库访问接口。
 
 	#include <iostream>
@@ -491,7 +571,7 @@ http_base_client抓取页面示例：
 	    return 0;
 	}
 
-### 2.6 websocket服务端封装 ###
+### websocket服务端封装 ###
 
 echo服务端代码示例：
 

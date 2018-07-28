@@ -1,5 +1,6 @@
 #include <iostream>
 #include "util/json.hpp"
+#include "serial/serial.hpp"
 
 using namespace shine;
 
@@ -8,7 +9,7 @@ struct B
     int a;
     double b;
     std::string c;
-    SHINE_JSON_MODEL(B, a, b, c);
+    SHINE_SERIAL_MODEL(B, a, b, c);
 };
 
 struct A{
@@ -23,7 +24,7 @@ struct A{
     std::forward_list<long> h;
     std::set<shine::string> i;
 
-    SHINE_JSON_MODEL(A, a, b, c, d, e, f, g, h, i);
+    SHINE_SERIAL_MODEL(A, a, b, c, d, e, f, g, h, i);
 };
 
 int main(){
@@ -57,12 +58,12 @@ int main(){
     a.i.emplace("B");
     a.i.emplace("C");
 
-    //将对象a编码成json字符串
-    auto a_str = a.json_encode();
+    //将对象a序列化成字节流
+    auto data = a.serial_encode();
 
-    //将json字符串解码成对象，解码后a2与a中数据相同
+    //将字节流反序列化成对象，反序列化后a2与a中数据相同
     A a2;
-    a2.json_decode(a_str);
+    a2.serial_decode(data);
 
     return 0;
 }

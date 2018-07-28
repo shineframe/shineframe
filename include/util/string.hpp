@@ -37,7 +37,7 @@ namespace shine
     {
     public:
         string() : std::string(){}
-        string(const char* str) : std::string(str) {}
+        string(const int8* str) : std::string(str) {}
         string(const std::string &other) : std::string(other){}
         string(std::string &&other) : std::string(other){}
         string(const string &other) : std::string(other){}
@@ -79,15 +79,15 @@ namespace shine
 //             std::string::assign(std::to_string(v));
 //         }
 
-        string (float v){
+        string (Float v){
             std::string::assign(std::move(number_to_string("%f", v)));
         }
 
-        string(double v){
+        string(Double v){
             std::string::assign(std::move(number_to_string("%f", v)));
         }
 
-        string(long double v){
+        string(LDouble v){
             std::string::assign(std::move(number_to_string("%Lf", v)));
         }
 
@@ -136,15 +136,15 @@ namespace shine
             return (uint32)std::stoull(*this);
         }
 
-        float to_float(){
+        Float to_float(){
             return std::stof(*this);
         }
 
-        double to_double(){
+        Double to_double(){
             return std::stod(*this);
         }
 
-        long double to_long_double(){
+        LDouble to_long_double(){
             return std::stold(*this);
         }
 
@@ -205,22 +205,22 @@ namespace shine
             return *this;
         }
 
-        string &operator=(float v){
+        string &operator=(Float v){
             std::string::assign(number_to_string("%f", v));
             return *this;
         }
 
-        string &operator=(double v){
+        string &operator=(Double v){
             std::string::assign(number_to_string("%f", v));
             return *this;
         }
 
-        string &operator=(long double v){
+        string &operator=(LDouble v){
             std::string::assign(number_to_string("%Lf", v));
             return *this;
         }
 
-        string &operator<<(const char *v){
+        string &operator<<(const int8 *v){
             std::string::append(v);
             return *this;
         }
@@ -275,17 +275,17 @@ namespace shine
             return *this;
         }
 
-        string &operator<<(float v){
+        string &operator<<(Float v){
             std::string::append(number_to_string("%f", v));
             return *this;
         }
 
-        string &operator<<(double v){
+        string &operator<<(Double v){
             std::string::append(number_to_string("%f", v));
             return *this;
         }
 
-        string &operator<<(long double v){
+        string &operator<<(LDouble v){
             std::string::append(number_to_string("%Lf", v));
             return *this;
         }
@@ -340,17 +340,17 @@ namespace shine
             return *this;
         }
 
-        string &operator+=(float v){
+        string &operator+=(Float v){
             std::string::append(number_to_string("%f", v));
             return *this;
         }
 
-        string &operator+=(double v){
+        string &operator+=(Double v){
             std::string::append(number_to_string("%f", v));
             return *this;
         }
 
-        string &operator+=(long double v){
+        string &operator+=(LDouble v){
             std::string::append(number_to_string("%Lf", v));
             return *this;
         }

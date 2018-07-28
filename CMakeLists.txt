@@ -20,6 +20,8 @@ ENDIF()
 
 ADD_EXECUTABLE(string examples/string.cpp)
 
+ADD_EXECUTABLE(serial_model examples/serial_model.cpp)
+
 ADD_EXECUTABLE(json_base examples/json_base.cpp)
 
 ADD_EXECUTABLE(json_model examples/json_model.cpp)
