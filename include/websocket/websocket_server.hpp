@@ -111,7 +111,7 @@ namespace shine
                     conn->async_send(answer.data(), answer.size());
             }
             bool assert_websocket_request(){
-                if (get_http_request().get_method() != http::method::get)
+                if (get_http_request().get_method() != http_method_get)
                     return false;
 
                 http::header::entrys_t &entrys = get_http_request().get_entrys();

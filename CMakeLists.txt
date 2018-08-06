@@ -42,3 +42,4 @@ ADD_EXECUTABLE(websocket_echo_server examples/websocket_echo_server.cpp)
 
 ADD_EXECUTABLE(zeromq examples/zeromq.cpp)
 
+ADD_EXECUTABLE(filesystem examples/filesystem.cpp)

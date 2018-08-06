@@ -16,9 +16,16 @@
 #else
 #endif
 
-
-
 using namespace std;
+
+const shine::int8* http_method_get = "GET";
+const shine::int8* http_method_head = "HEAD";
+const shine::int8* http_method_post = "POST";
+const shine::int8* http_method_put = "PUT";
+const shine::int8* http_method_delete_ = "DELETE";
+const shine::int8* http_method_connect = "CONNECT";
+const shine::int8* http_method_options = "OPTIONS";
+const shine::int8* http_method_trace = "TRACE";
 
 namespace shine
 {
@@ -30,17 +37,17 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(string, value);
         };
 
-        namespace method
-        {
-            static const int8* get = "GET";
-            static const int8* head = "HEAD";
-            static const int8* post = "POST";
-            static const int8* put = "PUT";
-            static const int8* delete_ = "DELETE";
-            static const int8* connect = "CONNECT";
-            static const int8* options = "OPTIONS";
-            static const int8* trace = "TRACE";
-        }
+//         namespace method
+//         {
+//             static const int8* get = "GET";
+//             static const int8* head = "HEAD";
+//             static const int8* post = "POST";
+//             static const int8* put = "PUT";
+//             static const int8* delete_ = "DELETE";
+//             static const int8* connect = "CONNECT";
+//             static const int8* options = "OPTIONS";
+//             static const int8* trace = "TRACE";
+//         }
 
         namespace decode_result{
             static const int32 success = 0;

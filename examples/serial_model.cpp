@@ -48,10 +48,10 @@ int main(){
     a.f.emplace_back((float)12.34);
     a.f.emplace_back((float)45.67);
 
-    a.g.emplace_back((double)456.789);
+    a.g.emplace_back((double)-456.789);
     a.g.emplace_back((double)78.9);
 
-    a.h.emplace_front(666);
+    a.h.emplace_front(-666);
     a.h.emplace_front(555);
 
     a.i.emplace("A");

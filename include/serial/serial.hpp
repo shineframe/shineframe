@@ -41,7 +41,9 @@
 #include "../common/define.hpp"
 #include "../util/string.hpp"
 
-#pragma warning(disable: 4146)
+#if (defined SHINE_OS_WINDOWS)
+#pragma warning(disable:4146)
+#endif
 
 #define SERIAL_GEN_ENCODE_FUNC(N, ...) \
     MARCO_EXPAND_WARP(MAKE_ARG_LIST(N, SERIAL_ENCODE_FIELD, __VA_ARGS__))

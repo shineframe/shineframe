@@ -9,7 +9,7 @@ int main(){
     sync_client clinet;
     clinet.set_recv_timeout(3000);
     clinet.get_request().set_host("www.baidu.com");
-    clinet.get_request().set_method(http::method::get);
+    clinet.get_request().set_method(http_method_get);
     clinet.get_request().set_url("/");
 
     if (clinet.call())
