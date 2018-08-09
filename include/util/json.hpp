@@ -812,7 +812,10 @@ if (val.empty()) return ""; \
     bool empty = true; \
 for (auto &iter : val)\
 {\
-    shine::string k = "\"" + json_encode_field(iter.first) + "\""; \
+    shine::string k;\
+    if (std::is_same<std::string, T1>::value) {k = json_encode_field(iter.first);} \
+    else if (std::is_same<shine::string, T1>::value) { k = json_encode_field(iter.first); }\
+    else { k = "\"" + json_encode_field(iter.first) + "\""; } \
     shine::string v = json_encode_field(iter.second); \
 if (!v.empty())\
 {\
