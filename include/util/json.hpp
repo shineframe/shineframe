@@ -682,7 +682,7 @@ namespace shine
 
 #define JSON_ENCODE_FIELD(field) \
 { \
-    shine::string tmp = ::json_encode_field(field); \
+    shine::string tmp = ::json_encode_field(this->field); \
 if (!tmp.empty())\
     {\
 if (!empty) ret += ","; \
@@ -696,7 +696,7 @@ if (!empty) ret += ","; \
 
 #define JSON_DECODE_FIELD(field) {\
     shine::json_node_t *node2 = node->find_kv_child(#field);\
-    if (node2) ::json_decode_field(field, node2); \
+    if (node2) ::json_decode_field(this->field, node2); \
 }
 
 inline shine::string json_encode_field(bool val){

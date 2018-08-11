@@ -19,12 +19,10 @@
 #pragma once
 
 #include <iostream>
-#include <windows.h>
-#include "../common/define.hpp"
+#include "../net/socket.hpp"
 
 using namespace std;
 
-#pragma once
 #include <windows.h>
 #include <string>
 #include <vector>
@@ -115,7 +113,6 @@ namespace shine
                     if (!!CreateDirectory(parent_dir.c_str(), NULL) ||
                         ERROR_ALREADY_EXISTS == GetLastError())
                         continue;
-                    auto mmm = GetLastError();
                     return false;
                 }
             } while (true);
@@ -405,7 +402,9 @@ namespace shine
             DWORD n = GetEnvironmentVariable(name.c_str(), buffer, sizeof(buffer));
             if (!n)
                 return{};
-            return string(buffer, n);
+
+            buffer[n] = '\0';
+            return buffer;
         }
 
         inline bool set_env(const string &name, const string &value) {
@@ -552,6 +551,7 @@ namespace shine
             }
             bool seek(size_t offset, whence _whence)
             {
+                
                 DWORD mode, ret;
                 LONG high_offset;
                 switch (_whence)

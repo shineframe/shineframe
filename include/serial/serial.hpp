@@ -58,7 +58,7 @@
 #define SERIAL_ENCODE_FIELD(field)\
 {\
     no++;\
-    shine::string tmp = serial_encode_field(field);\
+    shine::string tmp = serial_encode_field(this->field);\
     if (!tmp.empty())\
     {\
         ret += serial_encode_size(no);\
@@ -72,7 +72,7 @@
     no++;\
     if (no == data_no)\
     {\
-        if (!serial_decode_field(field, data, len, cost_len)) return false;\
+        if (!serial_decode_field(this->field, data, len, cost_len)) return false;\
         if (--count == 0){\
         cost_len = flag + size;\
         return true;\
