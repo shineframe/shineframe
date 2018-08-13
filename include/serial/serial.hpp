@@ -542,7 +542,7 @@ inline shine::string serial_encode_field(std::forward_list<T> &val, bool check =
         SERIAL_ENCODE_TYPE(shine::serial::e_array); 
         shine::size_t size = 0;
         for (auto &iter : val) {
-            ret += serial_encode_field(iter, false);
+            ret.insert(1, serial_encode_field(iter, false));
             size++;
         }
 

@@ -73,7 +73,7 @@ namespace shine
     namespace net{
         struct address_info_t{
             SHINE_GEN_MEMBER_GETSET(shine::string, ip);
-            SHINE_GEN_MEMBER_GETSET(int16, port);
+            SHINE_GEN_MEMBER_GETSET(uint16, port);
         };
 
         class socket{
@@ -97,6 +97,31 @@ namespace shine
                 ret.get_port() = atoi(addr.c_str() + pos + 1);
 
                 return !ret.get_ip().empty();
+            }
+
+            static bool get_local_addr(socket_t fd, address_info_t &ret) {
+                struct sockaddr_in sa;
+                int32 len = sizeof(sa);
+                if (!getsockname(fd, (struct sockaddr *)&sa, &len))
+                {
+                    ret.set_ip(inet_ntoa(sa.sin_addr));
+                    ret.set_port(ntohs(sa.sin_port));
+                    return true;
+                }
+                return false;
+            }
+
+            static bool get_remote_addr(socket_t fd, address_info_t &ret) {
+                struct sockaddr_in sa;
+                int32 len = sizeof(sa);
+                if (!getpeername(fd, (struct sockaddr *)&sa, &len))
+                {
+                    ret.set_ip(inet_ntoa(sa.sin_addr));
+                    ret.set_port(ntohs(sa.sin_port));
+
+                    return true;
+                }
+                return false;
             }
 
             /** 
@@ -211,8 +236,7 @@ namespace shine
                     return false;
 
                 new_fd = tmp;
-                info.get_ip() = inet_ntoa(addr.sin_addr);
-                info.get_port() = ntohs(addr.sin_port);
+                get_remote_addr(new_fd, info);
 
                 return true;
             }

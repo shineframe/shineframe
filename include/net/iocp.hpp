@@ -119,13 +119,14 @@ namespace shine
              *@warning 
              *@note 
             */
-            virtual void async_send(const int8 *data, size_t len)
+            virtual void async_send(const int8 *data, size_t len, bool flush = true)
             {
-
                 DWORD bytes = 0;
                 context &ctx = get_send_context();
 
                 ctx.get_buf().append(data, len);
+
+                if (!flush) return;
 
                 if (ctx.get_status() != context::e_idle)
                     return;
@@ -422,7 +423,9 @@ namespace shine
                     conn->set_kernel_fd(get_kernel_fd());
                     conn->set_socket_fd(get_new_conn_fd());
                     conn->set_timer_manager(get_timer_manager());
-                    conn->set_local_addr(get_local_addr());
+
+                    socket::get_local_addr(conn->get_socket_fd(), conn->get_local_addr());
+                    socket::get_remote_addr(conn->get_socket_fd(), conn->get_remote_addr());
                     socket::set_nodelay(get_new_conn_fd());
                     set_new_conn_fd(invalid_socket);
 
@@ -609,6 +612,7 @@ namespace shine
         public:
 
             void run() {
+
                 while (true)
                 {
                     DWORD timeout = (DWORD)_timer.do_timer();

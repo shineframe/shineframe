@@ -33,6 +33,10 @@
 
 using namespace std;
 
+void shine_handle_pipe(int sig)
+{
+}
+
 namespace shine
 {
     namespace net
@@ -83,10 +87,12 @@ namespace shine
                 start_recv_timeout_timer();
             }
 
-            virtual void async_send(const int8 *data, size_t len)
+            virtual void async_send(const int8 *data, size_t len, bool flush = true)
             {
                 context &ctx = get_send_context();
                 ctx.get_buf().append(data, len);
+
+                if (!flush) return;
 
                 if (get_monitor_events() & EPOLLOUT)
                     return;
@@ -426,7 +432,7 @@ namespace shine
                             conn->set_socket_fd(new_fd);
                             conn->set_timer_manager(get_timer_manager());
                             conn->set_remote_addr(new_addr);
-                            conn->set_local_addr(get_local_addr());
+                            socket::get_local_addr(new_fd, conn->get_local_addr());
 
                             if (!get_accept_callback()(status, conn))
                                 close();
@@ -466,12 +472,11 @@ namespace shine
 
             void run() {
 
-                sigset_t signal_mask;
-                sigemptyset(&signal_mask);
-                sigaddset(&signal_mask, SIGPIPE);
-                int rc = pthread_sigmask(SIG_BLOCK, &signal_mask, NULL);
-                if (rc != 0) 
-                    exit(-1);
+                struct sigaction action;
+                action.sa_flags = 0;
+                action.sa_handler = shine_handle_pipe;
+
+                sigaction(SIGPIPE, &action, NULL);
 
                 const int max_event_size = 64;
                 while (!get_stop_flag())
