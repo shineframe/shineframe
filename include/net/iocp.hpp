@@ -119,14 +119,32 @@ namespace shine
              *@warning 
              *@note 
             */
-            virtual void async_send(const int8 *data, size_t len, bool flush = true)
+            virtual void async_send(const int8 *data, size_t len)
+            {
+                iovec_t iov;
+                iov.data = (int8 *)data;
+                iov.size = len;
+
+                async_sendv(&iov, 1);
+            }
+
+            /**
+            *@brief 异步发送数据
+            *@param iov 数据块指针
+            *@param count 数据块个数
+            *@return void
+            *@warning
+            *@note
+            */
+            virtual void async_sendv(const iovec_t *iov, size_t count)
             {
                 DWORD bytes = 0;
                 context &ctx = get_send_context();
 
-                ctx.get_buf().append(data, len);
-
-                if (!flush) return;
+                for (size_t i = 0; i < count; i++)
+                {
+                    ctx.get_buf().append(iov[i].data, iov[i].size);
+                }
 
                 if (ctx.get_status() != context::e_idle)
                     return;
@@ -469,6 +487,7 @@ namespace shine
                     {
                         obj->get_recv_context().set_status(context::e_idle);
                         obj->get_send_context().set_status(context::e_idle);
+                        socket::get_local_addr(obj->get_socket_fd(), obj->get_local_addr());
                         obj->get_connect_callback()(true, obj);
                     }
                 }
@@ -753,7 +772,7 @@ namespace shine
 
         private:
             HANDLE _iocp;///<完成端口句柄
-            timer_manager _timer;///<定时器
+            SHINE_GEN_MEMBER_GETSET(timer_manager, timer);
 
         protected:
 

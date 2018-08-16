@@ -569,6 +569,8 @@ namespace shine
         public:
             typedef timer_manager* timer_manager_t;
             SHINE_GEN_MEMBER_GETSET(timer_manager_t, timer_manager);
+            typedef void* data_t;
+            SHINE_GEN_MEMBER_GETSET(data_t, bind_data, = nullptr);
         };
 
     }

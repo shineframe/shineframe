@@ -66,6 +66,10 @@ namespace shine
     typedef std::size_t size_t;
     typedef size_t size_type;
 
+    struct iovec_t {
+        int8 *data;
+        size_t size;
+    };
 }
 
 #include "macros.hpp"

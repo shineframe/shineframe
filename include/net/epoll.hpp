@@ -87,10 +87,39 @@ namespace shine
                 start_recv_timeout_timer();
             }
 
-            virtual void async_send(const int8 *data, size_t len, bool flush = true)
+            /**
+            *@brief 异步发送数据
+            *@param data 数据指针
+            *@param len 数据长度
+            *@return void
+            *@warning
+            *@note
+            */
+            virtual void async_send(const int8 *data, size_t len)
+            {
+                iovec_t iov;
+                iov.data = (int8 *)data;
+                iov.size = len;
+
+                async_sendv(&iov, 1);
+            }
+
+            /**
+            *@brief 异步发送数据
+            *@param iov 数据块指针
+            *@param count 数据块个数
+            *@return void
+            *@warning
+            *@note
+            */
+            virtual void async_sendv(const iovec_t *iov, size_t count)
             {
                 context &ctx = get_send_context();
-                ctx.get_buf().append(data, len);
+
+                for (size_t i = 0; i < count; i++)
+                {
+                    ctx.get_buf().append(iov[i].data, iov[i].size);
+                }
 
                 if (!flush) return;
 
@@ -509,6 +538,7 @@ namespace shine
                             {
                                 obj->set_type(peer::e_connection);
                                 obj->set_monitor_events(0);
+                                socket::get_local_addr(obj->get_socket_fd(), obj->get_local_addr());
                                 obj->get_connect_callback()(true, obj);
                             }
                         }

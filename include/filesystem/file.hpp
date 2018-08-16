@@ -46,6 +46,17 @@ namespace shine
             close();
         }
 
+#ifdef SHINE_OS_WINDOWS
+    private:
+        FILE * fopen(const int8 *path, const int8 *mode){
+            FILE *ret = 0;
+            fopen_s(&ret, path, mode);
+            
+            return ret;
+        }
+    public:
+#endif
+
         bool open(const string &path, bool create = true){
 
             if (create && !filesystem::file_exists(path))
