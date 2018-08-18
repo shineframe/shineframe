@@ -42,6 +42,10 @@
 
 using namespace std;
 
+#if (defined SHINE_OS_WINDOWS)
+#pragma warning(disable:4996)
+#endif
+
 const char* const log_level_desc[] = { "debug", "info", "warning", "error", "fatal" };
 #define log_buf_size  1024 * 10
 
@@ -50,18 +54,17 @@ namespace shine
     class log
     {
     public:
-        enum level { debug, info, warning, error, fatal };
-        enum output { file = 1, console = 2, socket = 4 };
+        enum { e_debug, e_info, e_warning, e_error, e_fatal };
+        enum { e_file = 1, e_console = 2, e_socket = 4 };
 
     public:
-        log(const std::string &filename, level filter_level = info) : _filename(filename), _filter_level(filter_level)
-        {
-            GETCWD(_buf, log_buf_size);
-            _path = _buf;
+        void init(const std::string &filename, int filter_level = e_info) {
+            _filename = filename;
+            _filter_level = filter_level;
         }
 
     public:
-        void write(level Level, int target, const char *fmt, ...)
+        void write(int Level, int target, const char *fmt, ...)
         {
             if (Level < _filter_level)
                 return;
@@ -73,34 +76,34 @@ namespace shine
 
             va_list valist;
             va_start(valist, fmt);
-            len += SHINE_SNPRINTF((char*)_buf + len, log_buf_size - len - 2, fmt, valist);
+            len += SHINE_VSNPRINTF((char*)_buf + len, log_buf_size - len - 2, fmt, valist);
             va_end(valist);
 
             _buf[len++] = '\n';
 
-            if (target & output::console)
+            if (target & e_console)
             {
                 _buf[len] = '\0';
                 puts(_buf);
             }
 
-            if (target & output::file)
+            if (target & e_file)
             {
                 datetime[10] = '\0';
-                char path[512];
-                auto path_len = SHINE_SNPRINTF(path, log_buf_size, "%s/%s_%s.log", _path.c_str(), _filename.c_str(), datetime.c_str());
+                char path[256];
+                auto path_len = SHINE_SNPRINTF(path, sizeof(path), "%s_%s.log", _filename.c_str(), datetime.c_str());
                 
                 path[path_len] = '\0';
 
                 FILE *f = fopen(path, "a");
                 if (f)
                 {
-                    fwrite(_buf, 1, len, f);
+                    fwrite(_buf, len, 1, f);
                     fclose(f);
                 }
             }
 
-            if (target & output::socket)
+            if (target & e_socket)
             {
                 //not impl
             }
@@ -109,9 +112,8 @@ namespace shine
     private:
         std::recursive_mutex _mutex;
         std::string _filename;
-        std::string _path;
-        level _filter_level;
-        int8 _buf[log_buf_size];
+        int _filter_level;
+        char _buf[log_buf_size];
     };
 }
 

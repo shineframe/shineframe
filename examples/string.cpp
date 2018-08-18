@@ -3,10 +3,9 @@
 #include <thread>
 #include <chrono>
 
-#include "redis/redis.hpp"
+#include "util/string.hpp"
 
 using namespace shine;
-using namespace shine::net;
 
 int main(){
 
