@@ -46,7 +46,7 @@ using namespace std;
 #pragma warning(disable:4996)
 #endif
 
-const char* const log_level_desc[] = { "debug", "info", "warning", "error", "fatal" };
+const char* const log_level_desc[] = { "D", "I", "W", "E", "F" };
 #define log_buf_size  1024 * 10
 
 namespace shine
@@ -72,7 +72,7 @@ namespace shine
             std::unique_lock<std::recursive_mutex> lock(_mutex);
             std::string datetime = tool::get_datetime(true);
 
-            auto len = SHINE_SNPRINTF(_buf, log_buf_size, "%s [%04X] %s ", datetime.c_str(), (int)GETTID(), log_level_desc[Level]);
+            auto len = SHINE_SNPRINTF(_buf, log_buf_size, "%s [%04X] %s ", datetime.c_str() + 11, (int)GETTID(), log_level_desc[Level]);
 
             va_list valist;
             va_start(valist, fmt);
@@ -115,5 +115,7 @@ namespace shine
         int _filter_level;
         char _buf[log_buf_size];
     };
+
+    
 }
 

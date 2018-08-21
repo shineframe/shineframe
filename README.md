@@ -19,7 +19,7 @@ github：[https://github.com/shineframe/shineframe](https://github.com/shinefram
 
 序列化工具，支持c++原生对象的序列化与反序列化，是网络自定义协议格式应用的开发利器。
 
-serial运行效率高于google protobuf,提供与protobuf相似的序列化特性，如：数值压缩编码，类似于varint,序列化后体积极小，当字段为0或者为空时不占用任何空间。serial支持协议向前兼容（当有无法识别的新字段时会自动略过），同时serial支持比protobuf更丰富强大的数据类型，基本的数据类型及STL标准容器字段均可进行序列化，支持结构嵌套（注:嵌套的结构体一定也要以SHINE_SERIAL_MODEL宏修饰，否则不支持，编译不通过）
+serial运行效率高于google protobuf,提供与protobuf相似的序列化特性，如：数值压缩编码，类似于varint,序列化后体积较小(略大于protobuf)。serial支持协议向前兼容（当有无法识别的新字段时会自动略过），同时serial支持比protobuf更丰富强大的数据类型，基本的数据类型及STL标准容器字段均可进行序列化，支持结构嵌套（注:嵌套的结构体一定也要以SHINE_SERIAL_MODEL宏修饰，否则不支持，编译不通过）
 
 serial_model操作示例（一行代码实现c++原生对象的序列化与反序列化）：
 

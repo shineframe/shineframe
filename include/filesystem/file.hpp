@@ -145,7 +145,8 @@ namespace shine
         }
 
         bool save(const string &buf){
-            clear();
+            resize(buf.size());
+            seek(0, SEEK_SET);
 
             auto rc = write(buf.data(), buf.size());
             if (rc != buf.size())
