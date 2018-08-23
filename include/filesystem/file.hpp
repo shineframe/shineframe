@@ -27,8 +27,9 @@
 #define FSEEK _fseeki64
 #define FTELL _ftelli64
 #else
-#define FSEEK _fseeki64
-#define FTELL fseeko64
+#include <stdio.h>
+#define FSEEK fseeko64
+#define FTELL ftello64
 #endif
 
 
@@ -112,10 +113,10 @@ namespace shine
 
         bool resize(size_t size){
             if (_file == 0) return false;
-#if (defined SHINE_OS_WINDOWS)
-            return _chsize_s(_file->_file, size) == 0;
+#if (defined SHINE_OS_WINDOWS) 
+            return _chsize_s(_fileno(_file), size) == 0;
 #else
-            return ftruncate(_file, size) == 0;
+            return ftruncate(fileno(_file), size) == 0;
 #endif
         }
 

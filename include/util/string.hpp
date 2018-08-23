@@ -36,7 +36,7 @@ namespace shine
     class string : public std::string
     {
     public:
-        string() : std::string(){}
+        string(){}
         string(const int8* str) : std::string(str) {}
         string(const std::string &other) : std::string(other){}
         string(std::string &&other) : std::string(other){}

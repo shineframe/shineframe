@@ -117,15 +117,10 @@ namespace shine
                 context &ctx = get_send_context();
 
                 for (size_t i = 0; i < count; i++)
-                {
                     ctx.get_buf().append(iov[i].data, iov[i].size);
-                }
-
-                if (!flush) return;
 
                 if (get_monitor_events() & EPOLLOUT)
                     return;
-
 
                 do_send();
             }

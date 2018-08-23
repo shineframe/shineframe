@@ -101,7 +101,7 @@ namespace shine
 
             static bool get_local_addr(socket_t fd, address_info_t &ret) {
                 struct sockaddr_in sa;
-                int32 len = sizeof(sa);
+                socklen_t len = sizeof(sa);
                 if (!getsockname(fd, (struct sockaddr *)&sa, &len))
                 {
                     ret.set_ip(inet_ntoa(sa.sin_addr));
@@ -113,7 +113,7 @@ namespace shine
 
             static bool get_remote_addr(socket_t fd, address_info_t &ret) {
                 struct sockaddr_in sa;
-                int32 len = sizeof(sa);
+                socklen_t len = sizeof(sa);
                 if (!getpeername(fd, (struct sockaddr *)&sa, &len))
                 {
                     ret.set_ip(inet_ntoa(sa.sin_addr));
