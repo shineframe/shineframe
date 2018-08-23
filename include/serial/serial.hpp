@@ -85,8 +85,6 @@ inline std::string serial_encode() const{\
 }\
 inline void serial_encode(std::string &ret) const{\
     shine::size_t old_size_flag = ret.size();\
-    shine::size_t size = 0;\
-    shine::size_t no = 0;\
     SERIAL_ENCODE(__VA_ARGS__); \
     serial_encode_size(ret.size() - old_size_flag, ret, false, old_size_flag); \
     }\
