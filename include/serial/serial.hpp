@@ -61,30 +61,13 @@
 
 #define SERIAL_ENCODE_FIELD(field)\
 {\
-    no++;\
-    shine::size_t old_size = ret.size();\
     serial_encode_field(this->field, ret);\
-    if (ret.size() > old_size)\
-    {\
-        serial_encode_size(no, ret, false, old_size); \
-        size++;\
-    }\
 }
 
 #define SERIAL_DECODE_FIELD(field) \
 {\
-    no++;\
-    if (no == data_no)\
-    {\
         if (!serial_decode_field(this->field, data, len, cost_len)) return false;\
-        if (--count == 0){\
-        cost_len = flag + size;\
-        return true;\
-        }\
-        if (!serial_decode_size(data_no, data, len, cost_len)) return false; \
-    }\
 }
-
 
 #define SERIAL_COMPARE_FIELD(field) \
 {\
@@ -105,13 +88,7 @@ inline void serial_encode(std::string &ret) const{\
     shine::size_t size = 0;\
     shine::size_t no = 0;\
     SERIAL_ENCODE(__VA_ARGS__); \
-    if (size > 0){\
-        serial_encode_size(size, ret, false, old_size_flag); \
-        serial_encode_size(ret.size() - old_size_flag, ret, false, old_size_flag); \
-    }\
-    else{\
-            serial_encode_size(0, ret);\
-    }\
+    serial_encode_size(ret.size() - old_size_flag, ret, false, old_size_flag); \
     }\
     \
     inline bool serial_decode(const std::string &data){\
@@ -130,12 +107,6 @@ inline void serial_encode(std::string &ret) const{\
         if (size == 0) return true;\
         shine::size_t flag = cost_len;\
         if (len - cost_len < size) return false; \
-        shine::size_t count = 0; \
-        if (!serial_decode_size(count, data, len, cost_len)) return false; \
-        if (count == 0) return true; \
-        shine::size_t no = 0; \
-        shine::size_t data_no = 0; \
-        if (!serial_decode_size(data_no, data, len, cost_len)) return false; \
         SERIAL_DECODE(__VA_ARGS__); \
         cost_len = flag + size;\
         return true; \
