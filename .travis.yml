@@ -1,9 +1,18 @@
 sudo: true
 language: cpp
 compiler: g++
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - george-edison55-precise-backports
+    packages:
+      - g++-4.9
+      - cmake-data
+      - cmake           
+  env:
+     - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 script: 
- - mkdir -p $HOME/.local
- - curl -L http://www.cmake.org/files/v3.6/cmake-3.6.2-Linux-i386.tar.gz | tar -xz -C $HOME/.local --strip-components=1
  - mkdir build && cd build
  - cmake ..
  - make
