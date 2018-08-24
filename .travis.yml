@@ -1,23 +1,9 @@
 sudo: true
 language: cpp
-matrix:
-  include:
-    - os: linux
-      env: COMPILER_NAME=gcc CXX=g++-6 CC=gcc-6 USEFOLDEXP=true
-      addons:
-        apt:
-          packages:
-            - g++-6
-            - lib32stdc++6
-          sources: *sources
-    
-
+compiler: g++
 script: 
  - mkdir -p $HOME/.local
  - curl -L http://www.cmake.org/files/v3.6/cmake-3.6.2-Linux-i386.tar.gz | tar -xz -C $HOME/.local --strip-components=1
- - export PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH
- - export COVERALLS_SERVICE_NAME=travis-ci
- - export COVERALLS_REPO_TOKEN=xCegPB5lX9j1FkHCALWoL7Wcc4VQrEno1
  - mkdir build && cd build
  - cmake ..
  - make
