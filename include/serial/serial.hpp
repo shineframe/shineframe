@@ -67,6 +67,7 @@
 #define SERIAL_DECODE_FIELD(field) \
 {\
         if (!serial_decode_field(this->field, data, len, cost_len)) return false;\
+        if (cost_len - flag >= size) return true; \
 }
 
 #define SERIAL_COMPARE_FIELD(field) \
