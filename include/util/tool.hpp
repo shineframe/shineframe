@@ -72,3 +72,90 @@ namespace shine
     };
 }
 
+namespace shine
+{
+    namespace serial
+    {
+        enum{
+            e_bool = 0,
+            e_byte = 1,
+            e_integer = 2,
+            e_float = 3,
+            e_double = 4,
+            e_bytes = 5,
+            e_array = 6,
+            e_set = 7,
+            e_map = 8,
+            e_struct = 9,
+        };
+
+        template<typename T>
+        inline void encode_size(std::string &buf, T size){
+            do {
+                shine::int8 ch = size & ((1 << 7) - 1);
+                if (size >>= 7)
+                    ch |= 0x80;
+
+                buf += ch;
+            } while (size);
+        }
+
+        template<typename T>
+        inline shine::size_t decode_size(T &val, const shine::int8 *data, const shine::size_t len){
+            if (len < 1)
+                return 0;
+
+            val = 0;
+            const shine::int8 *p = data;
+            shine::size_t i = 0;
+
+            for (;;)
+            {
+                if ((p[i] & 0x80) == 0x80)
+                {
+                    if (i < len - 1)
+                    {
+                        val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
+                        i++;
+                    }
+                    else
+                        return 0;
+                }
+                else
+                {
+                    val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
+                    return i + 1;
+                }
+            }
+        }
+    }
+
+    struct package_t{
+        size_t length = 0;
+        size_t type = 0;
+
+        inline string encode(){
+            string ret;
+
+            serial::encode_size(ret, length);
+            serial::encode_size(ret, type);
+
+            return std::move(ret);
+        }
+
+        inline size_t decode(const int8 *data, const size_t len){
+            size_t cost_len = serial::decode_size(length, data, len);
+
+            if (cost_len == 0)
+                return 0;
+
+            size_t cost_len2 = serial::decode_size(type, data + cost_len, len - cost_len);
+
+            if (cost_len2 == 0)
+                return 0;
+
+            return cost_len + cost_len2;
+        }
+    };
+
+}
