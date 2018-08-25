@@ -1,3 +1,0 @@
-[submodule "include/shine_serial"]
-	path = include/shine_serial
-	url = https://github.com/shineframe/shine_serial.git
