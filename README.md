@@ -18,27 +18,25 @@ github：[https://github.com/shineframe/shineframe](https://github.com/shinefram
 ## 二、库组成 ##
 
 
-### serial 媲美protobuf的强大序列化/反序列化工具 ###
+### [shine serial](https://github.com/shineframe/shine_serial "shine_serial") 媲美protobuf的强大序列化/反序列化工具 ###
 
-序列化工具，支持c++原生对象的序列化与反序列化，是网络自定义协议格式应用的开发利器。
+支持c++原生对象的序列化与反序列化，是网络自定义协议格式应用的开发利器。
 
-serial编解效率均高于google protobuf,提供与protobuf相似的序列化特性，如：数值压缩编码，类似于varint,序列化后体积极小(小于protobuf)。serial支持协议向前向后兼容（新版本的model能够解码旧版本的字节流，旧版本的model也能够解码新版本的字节流），同时serial支持比protobuf更丰富强大的数据类型，基本的数据类型及STL标准容器字段均可进行序列化，支持结构嵌套（注:嵌套的结构体一定也要以SHINE_SERIAL_MODEL宏修饰，否则不支持，编译不通过）
+shine serial编解效率均高于google protobuf,提供与protobuf相似的序列化特性，如：数值压缩编码，类似于varint,序列化后体积极小(小于protobuf)。serial支持协议向前向后兼容（新版本的model能够解码旧版本的字节流，旧版本的model也能够解码新版本的字节流），同时serial支持比protobuf更丰富强大的数据类型，基本的数据类型及主要STL标准容器类型字段均可进行序列化(vector, deque, list, forward_list, map, unordered_map, set, unordered_set)，支持结构嵌套（注:嵌套的结构体一定也要以SHINE_SERIAL_MODEL宏修饰，否则不支持，编译不通过）
 
-serial_model操作示例（一行代码实现c++原生对象的序列化与反序列化）：
+shine_serial操作示例（一行代码实现c++原生对象的序列化与反序列化）：
 
 	
 	#include <iostream>
-	#include "util/json.hpp"
-	#include "serial/serial.hpp"
-	
-	using namespace shine;
-	
+	#include "shine_serial.hpp"
+
 	struct B
 	{
 	    int a;
 	    double b;
 	    std::string c;
-	    SHINE_SERIAL_MODEL(B, a, b, c);
+	    //将类型名称及需要序列化的字段用SHINE_SERIAL包裹
+	    SHINE_SERIAL(B, a, b, c);
 	};
 	
 	struct A{
@@ -46,14 +44,16 @@ serial_model操作示例（一行代码实现c++原生对象的序列化与反�
 	    double b;
 	    std::string c;
 	
+	    //此处嵌套上方的结构体B
 	    std::map<int, B> d;
+	
 	    std::list<int> e;
 	    std::vector<float> f;
 	    std::deque<double> g;
 	    std::forward_list<long> h;
-	    std::set<shine::string> i;
+	    std::set<std::string> i;
 	
-	    SHINE_SERIAL_MODEL(A, a, b, c, d, e, f, g, h, i);
+	    SHINE_SERIAL(A, a, b, c, d, e, f, g, h, i);
 	};
 	
 	int main(){
@@ -88,15 +88,20 @@ serial_model操作示例（一行代码实现c++原生对象的序列化与反�
 	    a.i.emplace("C");
 	
 	    //将对象a序列化成字节流
-	    auto data = a.serial_encode();
+	    auto data = a.shine_serial_encode();
 	
 	    //将字节流反序列化成对象，反序列化后a2与a中数据相同
 	    A a2;
-	    a2.serial_decode(data);
+	    a2.shine_serial_decode(data);
+	
+        //确定结果
+	    std::cout << ((a == a2) ? "success" : "failed") << std::endl;
 	
 	    return 0;
 	}
 
+
+执行后输出:success
 
 
 ### json 强大的json工具 ###
