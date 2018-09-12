@@ -152,6 +152,8 @@ namespace shine
                 WSABUF &wsabuf = ctx.get_WSABuf();
                 wsabuf.buf = (CHAR*)ctx.get_buf().data();
                 wsabuf.len = (ULONG)ctx.get_buf().size();
+                if (wsabuf.len == 0)
+                    return;
 
                 if (WSASend(get_socket_fd(), &wsabuf, 1, &bytes, 0, (LPOVERLAPPED)&get_send_context(), nullptr) == SOCKET_ERROR)
                 {
@@ -488,6 +490,7 @@ namespace shine
                         obj->get_recv_context().set_status(context::e_idle);
                         obj->get_send_context().set_status(context::e_idle);
                         socket::get_local_addr(obj->get_socket_fd(), obj->get_local_addr());
+                        obj->async_sendv(0, 0);
                         obj->get_connect_callback()(true, obj);
                     }
                 }

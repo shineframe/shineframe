@@ -67,7 +67,7 @@ namespace shine
     typedef size_t size_type;
 
     struct iovec_t {
-        int8 *data;
+        const int8 *data;
         size_t size;
     };
 }

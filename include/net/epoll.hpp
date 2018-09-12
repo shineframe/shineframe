@@ -170,6 +170,9 @@ namespace shine
                 const char* data = ctx.get_buf().data();
                 int len = ctx.get_buf().size();
 
+                if (len == 0)
+                    return;
+
                 int send_len_total = 0;
 
                 while (send_len_total < len)
@@ -534,6 +537,7 @@ namespace shine
                                 obj->set_type(peer::e_connection);
                                 obj->set_monitor_events(0);
                                 socket::get_local_addr(obj->get_socket_fd(), obj->get_local_addr());
+                                obj->async_sendv(0, 0);
                                 obj->get_connect_callback()(true, obj);
                             }
                         }
@@ -657,7 +661,7 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(socket_t, epoll_fd, = invalid_socket);
             SHINE_GEN_MEMBER_GETSET(bool, stop_flag, = false);
 
-            timer_manager _timer;
+            SHINE_GEN_MEMBER_GETSET(timer_manager, timer);
 
         protected:
 

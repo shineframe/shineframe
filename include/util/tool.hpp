@@ -132,13 +132,13 @@ namespace shine
 
     struct package_t{
         size_t length = 0;
-        size_t type = 0;
+        size_t identify = 0;
 
-        inline string encode(){
-            string ret;
+        inline std::string encode(){
+            std::string ret;
 
             serial::encode_size(ret, length);
-            serial::encode_size(ret, type);
+            serial::encode_size(ret, identify);
 
             return std::move(ret);
         }
@@ -149,7 +149,7 @@ namespace shine
             if (cost_len == 0)
                 return 0;
 
-            size_t cost_len2 = serial::decode_size(type, data + cost_len, len - cost_len);
+            size_t cost_len2 = serial::decode_size(identify, data + cost_len, len - cost_len);
 
             if (cost_len2 == 0)
                 return 0;

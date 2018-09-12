@@ -217,11 +217,7 @@ namespace shine
                 }
             }
 
-            bool call(bool close_on_finish = true){
-                string data;
-                if (!get_request().encode(data))
-                    return false;
-
+            bool reset_socket(){
                 if (get_socket_fd() == invalid_socket)
                 {
                     set_socket_fd(net::socket::create(AF_INET, SOCK_STREAM, 0));
@@ -237,19 +233,35 @@ namespace shine
                         close_connection();
                         return false;
                     }
-                    else
-                    {
-                        if (get_recv_timeout() > 0)
-                        {
-                            timeval tv;
-                            tv.tv_sec = get_recv_timeout() / 1000;
-                            tv.tv_usec = get_recv_timeout() % 1000;
-
-                            setsockopt(get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
-                            setsockopt(get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-                        }
-                    }
                 }
+
+                auto timeout = get_recv_timeout();
+
+                if (timeout > 0)
+                {
+#if (defined SHINE_OS_WINDOWS)
+                    setsockopt(get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout, sizeof(timeout));
+                    setsockopt(get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+#else
+                    timeval tv;
+                    tv.tv_sec = timeout / 1000;
+                    tv.tv_usec = timeout % 1000;
+
+                    setsockopt(get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
+                    setsockopt(get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+#endif
+                }
+
+                return true;
+            }
+
+            bool call(bool close_on_finish = true){
+                string data;
+                if (!get_request().encode(data))
+                    return false;
+
+                if (!reset_socket())
+                    return false;
 
                 int rc = 0;
                 size_t len = data.size();

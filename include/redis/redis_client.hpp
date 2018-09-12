@@ -416,8 +416,7 @@ namespace shine
                 }
             }
 
-            bool call(const string &data){
-
+            bool reset_socket(){
                 if (get_socket_fd() == invalid_socket)
                 {
                     set_socket_fd(net::socket::create(AF_INET, SOCK_STREAM, 0));
@@ -432,28 +431,44 @@ namespace shine
                         close_connection();
                         return false;
                     }
-                    else
+                }
+
+                if (get_recv_timeout() > 0)
+                {
+                    auto timeout = get_recv_timeout();
+
+                    if (timeout > 0)
                     {
-                        if (get_recv_timeout() > 0)
-                        {
-                            timeval tv;
-                            tv.tv_sec = get_recv_timeout() / 1000;
-                            tv.tv_usec = get_recv_timeout() % 1000;
+#if (defined SHINE_OS_WINDOWS)
+                        setsockopt(get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, (const char *)&timeout, sizeof(timeout));
+                        setsockopt(get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+#else
+                        timeval tv;
+                        tv.tv_sec = timeout / 1000;
+                        tv.tv_usec = timeout % 1000;
 
-                            setsockopt(get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
-                            setsockopt(get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-                        }
-
-                        if (!get_auth().empty())
-                        {
-                            string auth_request = request::encode({"AUTH", get_auth()});
-                            ::send(get_socket_fd(), auth_request.data(), (int)auth_request.size(), 0);
-                            string auth_response;
-                            auth_response.resize(128);
-                            ::recv(get_socket_fd(), (int8*)auth_response.data(), (int)auth_response.size(), 0);
-                        }
+                        setsockopt(get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
+                        setsockopt(get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+#endif
                     }
                 }
+
+                if (!get_auth().empty())
+                {
+                    string auth_request = request::encode({ "AUTH", get_auth() });
+                    ::send(get_socket_fd(), auth_request.data(), (int)auth_request.size(), 0);
+                    string auth_response;
+                    auth_response.resize(128);
+                    ::recv(get_socket_fd(), (int8*)auth_response.data(), (int)auth_response.size(), 0);
+                }
+
+                return true;
+
+            }
+
+            bool call(const string &data){
+                if (!reset_socket())
+                    return false;
 
                 int rc = 0;
 
