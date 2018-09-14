@@ -9,6 +9,7 @@
 #include "raft_config.hpp"
 #include "raft_protocol.hpp"
 #include "../util/log.hpp"
+#include "../rpc/rpc_server.hpp"
 
 #if (defined SHINE_OS_WINDOWS)
 #else
@@ -38,7 +39,7 @@ namespace shine
         struct request_session_t{
             uint64 identify;
             uint64 sequence;
-            uint64 timer_id;
+            uint64 timer_id = invalid_timer_id;
             uint64 request_count;
             uint64 response_count = 0;
             uint64 pass_count = 0;
@@ -127,8 +128,7 @@ namespace shine
                 //leader发生异常，启动投票定时器
                 if (conn == _leader_peer)
                 {
-                    cancel_timer(_vote_timer);
-                    _vote_timer = _engine.get_timer().set_timer(_config.vote_wait_base, std::bind(&node::handle_vote_timer, this));
+                    set_timer(_vote_timer, _config.vote_wait_base, std::bind(&node::handle_vote_timer, this));
                 }
                 return false;
             }
@@ -268,19 +268,13 @@ namespace shine
                     }
                 }
 
-                _heartbeat_timer = _engine.get_timer().set_timer(_config.heartbeat, std::bind(&node::handle_heartbeat_timer, this));
-
-                _vote_timer = _engine.get_timer().set_timer(_config.vote_wait_base, std::bind(&node::handle_vote_timer, this));
+                set_timer(_heartbeat_timer, _config.heartbeat, std::bind(&node::handle_heartbeat_timer, this));
+                set_timer(_vote_timer, _config.vote_wait_base, std::bind(&node::handle_vote_timer, this));
                 _engine.run();
             }
 
         ///////////////////////////////////////////////////////////////////////////////////////
         private:
-            template<typename T>
-            bool decode_message(T &obj, const int8 *data, size_t len){
-                return obj.serial_decode(data, len);
-            }
-
             bool on_message(size_t type, const int8 *data, size_t len, connection *conn){
                 conn_session_t *sess = (conn_session_t*)conn->get_bind_data();
                 if (sess == nullptr)
@@ -334,7 +328,7 @@ namespace shine
                 send(msg, &_server_remote_peers);
 
                 auto sequence = msg.header.sequence;
-                sess.timer_id = set_timer(3000, [this, sequence]()->bool{
+                set_timer(sess.timer_id, 3000, [this, sequence]()->bool{
                     handle_request_session_timeout(sequence);
                     return false;
                 });
@@ -459,9 +453,9 @@ namespace shine
                 return true;
             }
 
-
-            uint64 set_timer(uint64 delay, std::function<bool()> func){
-                return _engine.get_timer().set_timer(delay, func);
+            void set_timer(uint64 &timer_id, uint64 delay, std::function<bool()> func){
+                cancel_timer(timer_id);
+                timer_id = _engine.get_timer().set_timer(delay, func);
             }
 
             void cancel_timer(uint64 &timer_id){
@@ -597,6 +591,7 @@ namespace shine
             log _log;
             int32 _log_level = log::e_debug;
             int32 _log_output = log::e_console | log::e_file;
+
         };
     }
 }

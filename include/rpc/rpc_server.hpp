@@ -28,6 +28,8 @@ namespace shine
 {
     namespace rpc
     {
+        typedef std::function <bool(const int8 *data, shine::size_t len, package_t &header, string &rsp_data)> rpc_handle_t;
+
         struct conn_session_t{
             uint8 decode_step = e_decode_header;
             package_t header;
@@ -38,11 +40,10 @@ namespace shine
 
         class server{
         public:
-            typedef std::function <bool(const int8 *data, shine::size_t len, package_t &header, string &rsp_data)> rpc_handle_t;
-        public:
             server(net::proactor_engine &engine, const string &name, const string &addr) : _engine(engine){
                 _name = name;
                 _addr = addr;
+                init();
             }
             virtual ~server() {
 
@@ -53,23 +54,21 @@ namespace shine
                 _handle_map.emplace(type, std::move(func));
             }
 
-            void run(){
-                if (!_run)
-                {
-                    init();
-                    _run = true;
-                }
+        protected:
+            void register_callback(net::connection *conn){
+                conn_session_t *data = new conn_session_t;
+                conn->set_bind_data(data);
+                conn->set_recv_timeout(0);
+                conn->register_recv_callback(std::bind(&server::recv_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                conn->register_close_callback(std::bind(&server::close_callback, this, std::placeholders::_1));
+                conn->async_recv();
             }
+
         private:
             void init(){
                 _engine.add_acceptor(_name, _addr, [this](bool status, net::connection *conn)->bool{
                     if (status) {
-                        conn_session_t *data = new conn_session_t;
-                        conn->set_bind_data(data);
-                        conn->set_recv_timeout(0);
-                        conn->register_recv_callback(std::bind(&server::recv_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-                        conn->register_close_callback(std::bind(&server::close_callback, this, std::placeholders::_1));
-                        conn->async_recv();
+                        register_callback(conn);
                     }
 
                     return true;
@@ -149,13 +148,32 @@ namespace shine
                     delete bind_data;
             }
 
-        private:
-            bool _run = false;
+        protected:
             string _name;
             string _addr;
             net::proactor_engine &_engine;
             std::unordered_map<uint64, rpc_handle_t> _handle_map;
         };
 
+        class pipe_server : public server{
+        public:
+            pipe_server(net::proactor_engine &engine, socket_t socket_fd) : server(engine, "", ""){
+                _socket_fd = socket_fd;
+                init();
+            }
+
+        private:
+            void init(){
+                _engine.add_connection(_name, _socket_fd, [this](bool status, net::connection *conn)->bool{
+                    if (status) {
+                        register_callback(conn);
+                    }
+                    return true;
+                });
+            }
+
+        private:
+            socket_t _socket_fd = invalid_socket;
+        };
     }
 }

@@ -37,6 +37,7 @@ namespace shine
             client(const string &addr) : _addr(addr){
             }
             virtual ~client() {
+                close_connection();
             }
 
             template<typename REQ, typename RSP>
@@ -158,9 +159,16 @@ namespace shine
                 }
             }
 
-        private:
+        protected:
             socket_t _socket_fd = invalid_socket;
             string _addr;
+        };
+
+        class pipe_client : public client{
+        public:
+            pipe_client(socket_t socket) : client("") {
+                _socket_fd = socket;
+            }
         };
     }
 }
