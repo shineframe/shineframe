@@ -11,6 +11,12 @@
 
 using namespace shine;
 
+struct raft_error{
+    static const shine::int32 success = 0;
+    static const shine::int32 unable_execute = 1;
+    static const shine::int32 decode = 2;
+};
+
 struct raft_header{
     shine::string id;
     shine::uint64 sequence = 0;
@@ -68,4 +74,17 @@ struct raft_commit_response{
     shine::uint64 no;
     shine::int32 result = 0;
     SHINE_SERIAL(raft_commit_response, header, no, result);
+};
+
+struct raft_execute_request{
+    static const shine::size_t identify = 101;
+    std::string data;
+    SHINE_SERIAL(raft_execute_request, data);
+};
+
+struct raft_execute_response{
+    static const shine::size_t identify = 102;
+    shine::int32 result = 0;
+    std::string data;
+    SHINE_SERIAL(raft_execute_response, result, data);
 };

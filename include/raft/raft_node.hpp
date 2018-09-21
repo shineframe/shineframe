@@ -10,6 +10,7 @@
 #include "raft_protocol.hpp"
 #include "../util/log.hpp"
 #include "../rpc/rpc_server.hpp"
+#include "../concurrent_queue/concurrent_queue.hpp"
 
 #if (defined SHINE_OS_WINDOWS)
 #else
@@ -36,6 +37,11 @@ namespace shine
             e_failed = 1
         };
 
+        struct rpc_cannel_t {
+            net::connection *server;
+            std::shared_ptr<rpc::pipe_client> client;
+        };
+
         struct request_session_t{
             uint64 identify;
             uint64 sequence;
@@ -44,6 +50,7 @@ namespace shine
             uint64 response_count = 0;
             uint64 pass_count = 0;
             uint64 unpass_count = 0;
+            rpc_cannel_t *rpc_channel = nullptr;
         };
 
         struct conn_session_t{
@@ -59,16 +66,55 @@ namespace shine
 #define NODE_LOG(...) _log.write(_log_level, _log_output, __VA_ARGS__);
         class node{
         public:
-            node() {
-                _request_session.reserve(1000);
-            }
-            void run(const string &config_file_path){
-                NODE_LOG("raft node running. config path : %s", config_file_path.c_str());
-                _config_file_path = config_file_path;
+            node(const string &config_file_path) : _config_file_path(config_file_path) {
                 _thread = std::make_shared<std::thread>(std::bind(&node::worker_func, this));
             }
 
+            void execute(raft_execute_request &req, raft_execute_response &rsp, shine::uint32 timeout = 3000) {
+
+                int32 thread_id = (int32)GETTID();
+                if (thread_id == _thread_id)
+                {
+                    rsp.result = raft_error::unable_execute;
+                    return;
+                }
+                
+                std::unique_lock<std::recursive_mutex> lock(_execute_mutex);
+                auto iter = _execute_cannels.find(thread_id);
+                if (iter == _execute_cannels.end())
+                {
+
+                    std::pair<socket_t, socket_t> pair;
+                    net::socket::create_socketpair(pair);
+                    std::shared_ptr<rpc_cannel_t> rpc_cannel = std::make_shared<rpc_cannel_t>();
+                    _engine.add_connection("", pair.first, [&rpc_cannel, this](bool status, net::connection *conn)->bool{
+                        if (status) {
+                            rpc_cannel->server = conn;
+
+                            conn_session_t *data = new conn_session_t;
+                            conn->set_bind_data(data);
+                            conn->set_recv_timeout(0);
+                            conn->register_recv_callback(std::bind(&node::recv_callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+                            conn->register_close_callback(std::bind(&node::close_callback, this, std::placeholders::_1));
+                            conn->async_recv();
+                        }
+                        return true;
+                    });
+
+                    rpc_cannel->client = std::make_shared<rpc::pipe_client>(pair.second);
+
+                    iter = _execute_cannels.emplace(std::move(thread_id), std::move(rpc_cannel)).first;
+                }
+
+                bool result = false;
+                iter->second->client->call(req.identify, req, rsp, result, timeout);
+            }
+
         private:
+            void execute_impl(raft_execute_request &req, raft_execute_response &rsp, shine::uint32 timeout) {
+            }
+
+
             bool recv_callback(const int8 *data, shine::size_t len, net::connection *conn)
             {
                 conn_session_t *bind_data = (conn_session_t*)conn->get_bind_data();
@@ -195,6 +241,19 @@ namespace shine
             }
 
             void worker_func(){
+                _thread_id = (int32)GETTID();
+//                 std::pair<socket_t, socket_t> pair;
+//                 net::socket::create_socketpair(pair);
+// 
+//                 _rpc_server = make_shared<rpc::pipe_server>(_engine, pair.first);
+//                 _rpc_server->register_rpc_handle(raft_execute_request::identify, std::bind(&node::handle_rpc_execute_request, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
+// 
+//                 _rpc_client = make_shared<rpc::pipe_client>(pair.second);
+                
+                _request_session.reserve(1000);
+
+                NODE_LOG("raft node running. config path : %s", _config_file_path.c_str());
+
                 file config;
 
                 if (!config.open(_config_file_path))
@@ -293,6 +352,12 @@ namespace shine
                     return sess->type == e_endpoint_client ? handle_client_##MSG(msg, conn, sess) : handle_server_##MSG(msg, conn, sess); \
                 }
 
+                if (type == raft_execute_request::identify)
+                {
+                    raft_execute_request req;
+                    return true;
+                }
+
                 HANDLE_MESSAGE(raft_heartbeat);
                 HANDLE_MESSAGE(raft_vote_request);
                 HANDLE_MESSAGE(raft_vote_response);
@@ -328,14 +393,30 @@ namespace shine
                 send(msg, &_server_remote_peers);
 
                 auto sequence = msg.header.sequence;
-                set_timer(sess.timer_id, 3000, [this, sequence]()->bool{
+                set_timer(_vote_timer, 3000, [this, sequence]()->bool{
                     handle_request_session_timeout(sequence);
                     return false;
                 });
 
+                sess.timer_id = _vote_timer;
+
                 _request_session.emplace(sequence, std::move(sess));
                 return false;
             }
+
+            bool handle_rpc_execute_request(raft_execute_request &msg, connection *conn, conn_session_t *sess){
+                if (_leader)
+                {
+                    //
+                }
+                else
+                {
+
+                }
+
+                return true;
+            }
+
 
             bool handle_client_raft_heartbeat(raft_heartbeat &msg, connection *conn, conn_session_t *sess){
                 //当leader发生变化时
@@ -472,6 +553,8 @@ namespace shine
 
                 if (sess.identify == raft_vote_request::identify)
                 {
+                    //等待投票应答超时,重新设置投票定时器
+                    set_timer(_vote_timer, _config.vote_wait_base, std::bind(&node::handle_vote_timer, this));
 
                 }
             }
@@ -541,7 +624,6 @@ namespace shine
                             , peer->get_remote_addr().get_ip().c_str()
                             , peer->get_remote_addr().get_port());
                     }
-
                 }
             }
 
@@ -579,6 +661,7 @@ namespace shine
 
             net::proactor_engine _engine;
             std::shared_ptr<std::thread> _thread;
+            int32 _thread_id = 0;
             std::set<connection*> _server_remote_peers;
             std::map<string, connection*> _client_peers;
             connection * _leader_peer = nullptr;
@@ -592,6 +675,13 @@ namespace shine
             int32 _log_level = log::e_debug;
             int32 _log_output = log::e_console | log::e_file;
 
+            std::pair<socket_t, socket_t> _signal_pipe;
+            block_concurrent_queue<std::string> _execute_queue;
+            std::shared_ptr<rpc::pipe_server> _rpc_server;
+            std::shared_ptr<rpc::pipe_client> _rpc_client;
+            std::condition_variable _execute_cv;
+            std::recursive_mutex _execute_mutex;
+            std::unordered_map<int32, std::shared_ptr<rpc_cannel_t> > _execute_cannels;
         };
     }
 }
