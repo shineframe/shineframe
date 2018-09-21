@@ -141,6 +141,11 @@ namespace shine
 
                 return true;
             }
+            
+            bool signal_callback(const int8 *data, shine::size_t len, net::connection *conn)
+            {
+                return true;
+            }
 
             void close_callback(net::connection *conn){
                 conn_session_t *bind_data = (conn_session_t*)conn->get_bind_data();

@@ -47,13 +47,14 @@ void init_config(int id, shine::raft::node &node){
 
 int main(){
 
-    shine::raft::node node;
-//     init_config(1, node);
+    shine::raft::node node("raft.cfg");
 
-    node.run("raft.cfg");
     for (;;)
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        raft_execute_request req;
+        raft_execute_response rsp;
+        node.execute(req, rsp);
     }
     return 0;
 }

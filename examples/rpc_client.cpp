@@ -21,7 +21,7 @@ int main(){
             {
                 req.a = i * i;
                 req.b = i + 1;
-                client.sync_call(req.type, req, rsp, rc);
+                client.call(req.type, req, rsp, rc);
                 std::cout << i << "  " << rc << " result:" << rsp.total << std::endl;
             }   
 
@@ -35,7 +35,7 @@ int main(){
             for (int i = 0; i < 100; i++)
             {
                 req.message = "PING";
-                client.sync_call(req.type, req, rsp, rc);
+                client.call(req.type, req, rsp, rc);
                 std::cout << i << "  " << rc << " result:" << rsp.message << std::endl;
             }
 

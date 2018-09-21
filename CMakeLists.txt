@@ -50,3 +50,4 @@ ADD_EXECUTABLE(rpc_server examples/rpc_server.cpp)
 
 ADD_EXECUTABLE(raft_node examples/raft_node.cpp)
 
+ADD_EXECUTABLE(concurrent_queue examples/concurrent_queue.cpp)

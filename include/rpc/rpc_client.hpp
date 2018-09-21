@@ -41,7 +41,7 @@ namespace shine
             }
 
             template<typename REQ, typename RSP>
-            void sync_call(uint64 identify, const REQ &req, RSP &rsp, bool &result, uint32 timeout = 3000) {
+            void call(uint64 identify, const REQ &req, RSP &rsp, bool &result, uint32 timeout = 3000) {
                 if (!reset_socket(timeout)) {
                     result = false;
                     return;

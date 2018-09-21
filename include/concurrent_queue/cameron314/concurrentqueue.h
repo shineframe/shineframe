@@ -395,10 +395,10 @@ namespace details
 	};
 	template<std::size_t size> struct hash_32_or_64 : public _hash_32_or_64<(size > 4)> {  };
 	
-	static inline size_t hash_thread_id(thread_id_t id)
+	static inline std::size_t hash_thread_id(thread_id_t id)
 	{
 		static_assert(sizeof(thread_id_t) <= 8, "Expected a platform where thread IDs are at most 64-bit values");
-		return static_cast<size_t>(hash_32_or_64<sizeof(thread_id_converter<thread_id_t>::thread_id_hash_t)>::hash(
+		return static_cast<std::size_t>(hash_32_or_64<sizeof(thread_id_converter<thread_id_t>::thread_id_hash_t)>::hash(
 			thread_id_converter<thread_id_t>::prehash(id)));
 	}
 	
