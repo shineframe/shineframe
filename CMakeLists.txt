@@ -12,7 +12,7 @@ IF(NOT WIN32)
  LINK_DIRECTORIES(/usr/lib)
  LINK_DIRECTORIES(/usr/local/lib)
  LINK_DIRECTORIES(/usr/local/mysql/lib)
- 
+ LINK_DIRECTORIES(../bin) 
  LINK_LIBRARIES(dl)
  LINK_LIBRARIES(pthread)
  LINK_LIBRARIES(mysqlclient_r)
@@ -48,6 +48,6 @@ ADD_EXECUTABLE(rpc_client examples/rpc_client.cpp)
 
 ADD_EXECUTABLE(rpc_server examples/rpc_server.cpp)
 
-ADD_EXECUTABLE(raft_node examples/raft_node.cpp)
+ADD_EXECUTABLE(raft_nosql_example examples/raft_nosql_example.cpp)
 
 ADD_EXECUTABLE(concurrent_queue examples/concurrent_queue.cpp)

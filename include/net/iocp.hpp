@@ -115,45 +115,43 @@ namespace shine
              *@brief 异步发送数据
              *@param data 数据指针
              *@param len 数据长度
-             *@return void 
+             *@param flush 立即发送
+             *@return void
              *@warning 
              *@note 
             */
-            virtual void async_send(const int8 *data, size_t len)
+            virtual void async_send(const int8 *data, size_t len, bool flush = true)
             {
                 iovec_t iov;
                 iov.data = (int8 *)data;
                 iov.size = len;
 
-                async_sendv(&iov, 1);
+                async_sendv(&iov, 1, flush);
             }
 
             /**
             *@brief 异步发送数据
             *@param iov 数据块指针
             *@param count 数据块个数
-            *@return void
+            *@param flush 立即发送
+           *@return void
             *@warning
             *@note
             */
-            virtual void async_sendv(const iovec_t *iov, size_t count)
+            virtual void async_sendv(const iovec_t *iov, size_t count, bool flush = true)
             {
                 DWORD bytes = 0;
                 context &ctx = get_send_context();
 
                 for (size_t i = 0; i < count; i++)
-                {
                     ctx.get_buf().append(iov[i].data, iov[i].size);
-                }
 
-                if (ctx.get_status() != context::e_idle)
+                if (!flush || ctx.get_buf().size() == 0 || ctx.get_status() != context::e_idle)
                     return;
 
                 WSABUF &wsabuf = ctx.get_WSABuf();
                 wsabuf.buf = (CHAR*)ctx.get_buf().data();
                 wsabuf.len = (ULONG)ctx.get_buf().size();
-                if (wsabuf.len == 0)
-                    return;
 
                 if (WSASend(get_socket_fd(), &wsabuf, 1, &bytes, 0, (LPOVERLAPPED)&get_send_context(), nullptr) == SOCKET_ERROR)
                 {

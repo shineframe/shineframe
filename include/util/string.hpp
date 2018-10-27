@@ -500,6 +500,26 @@ namespace shine
             return find(text) != std::string::npos;
         }
 
+        static string print_hex_string(const string &str){
+            static const uint8 buf[] = "0123456789ABCDEF";
+            string ret;
+            for (size_t i = 0; i < str.size(); i++)
+            {
+                if (i > 0 && i % 8 == 0)
+                    ret += ' ';
+
+                uint32 index = (uint8)str[i];
+                ret += buf[index >> 4];
+                ret += buf[index & 0xF];
+                ret += ' ';
+
+                if (i > 0 && i % 32 == 0)
+                    ret += "\n";
+            }
+
+            return std::move(ret);
+        }
+
         string md5_16() const {
             return md5_16(*this);
         }

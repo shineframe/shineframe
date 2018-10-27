@@ -69,12 +69,12 @@ namespace shine
                 if (pos != string::npos)
                     filesystem::mkdir(path.substr(0, pos));
 
-                FILE *tmp = fopen(path.c_str(), "w");
+                FILE *tmp = fopen(path.c_str(), "wb");
                 if (tmp != 0)
                     fclose(tmp);
             }
 
-            _file = fopen(path.c_str(), "r+");
+            _file = fopen(path.c_str(), "rb+");
             return _file != 0;
         }
 
@@ -129,7 +129,12 @@ namespace shine
         size_t write(const int8 *buf, size_t size){
             if (_file == 0) return 0;
 
-            return fwrite(buf, 1, size, _file);
+            auto rc = fwrite(buf, 1, size, _file);
+            return rc;
+        }
+
+        size_t append(const std::string &data){
+            return append(data.data(), data.size());
         }
 
         size_t append(const int8 *buf, size_t size){
@@ -167,7 +172,7 @@ namespace shine
 
             size_t cur_pos = tell();
             seek(0, SEEK_SET);
-            size_t ret = fread((void*)buf.data(), buf.size(), 1, _file);
+            size_t ret = fread((void*)buf.data(), 1, buf.size(), _file);
 
             if (ret != cur_pos)
                 seek(cur_pos, SEEK_SET);

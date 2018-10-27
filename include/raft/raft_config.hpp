@@ -10,9 +10,7 @@
 
 struct raft_node_status{
     shine::uint64 term = 0;
-    shine::uint64 commit = 0;
-    shine::uint64 uncommit = 0;
-    SHINE_SERIAL(raft_node_status, term, commit, uncommit);
+    SHINE_SERIAL(raft_node_status, term);
 };
 
 struct raft_entry{
@@ -27,22 +25,27 @@ struct raft_node_entry{
 };
 
 struct raft_node_info{
-    shine::string id;
+    shine::uint16 type;
+    shine::uint16 id;
     shine::string ip;
     shine::uint16 port;
 
-    SHINE_JSON_MODEL(raft_node_info, id, ip, port);
+    SHINE_JSON_MODEL(raft_node_info, type, id, ip, port);
 };
 
 struct raft_config{
-    shine::string id;
+    shine::uint16 type = 0;
+    shine::uint16 id = 0;
     shine::uint32 heartbeat = 2000;
     shine::uint32 heartbeat_timeout_count = 3;
     shine::uint32 vote_wait_base = 1000;
+    shine::uint32 submit_wait_base = 2000;
+    shine::uint32 commit_wait_base = 2000;
+    shine::uint32 get_entry_wait_base = 5000;
     shine::string status_file = "status.log";
     shine::string entry_file = "entry.log";
-    std::map<shine::string, raft_node_info> nodes;
+    std::map<shine::uint16, raft_node_info> nodes;
 
-    SHINE_JSON_MODEL(raft_config, id, heartbeat, heartbeat_timeout_count, vote_wait_base, status_file, entry_file, nodes);
+    SHINE_JSON_MODEL(raft_config, type, id, heartbeat, heartbeat_timeout_count, vote_wait_base, submit_wait_base, commit_wait_base, get_entry_wait_base, status_file, entry_file, nodes);
 };
 
