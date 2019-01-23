@@ -274,7 +274,8 @@ namespace shine
                     if (get_socket_fd() == invalid_socket)
                     {
                         get_timer_manager()->set_timer(get_reconnect_delay(), [this]()->bool{
-                            this->async_connect();
+                            if (!this->async_connect())
+                                std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
                             return false;
                         });
                     }
@@ -303,7 +304,7 @@ namespace shine
                     , sizeof(func), &ret, 0, 0) == SOCKET_ERROR)
                     return false;
 
-                if (!socket::bind(get_socket_fd(), "0.0.0.0:0"))
+                if (!socket::bind(get_socket_fd(), get_local_addr().get_address_string()))
                     return false;
 
                 struct sockaddr_in address;
@@ -589,7 +590,8 @@ namespace shine
                      if (obj->get_reconnect())
                      {
                          obj->get_timer_manager()->set_timer(obj->get_reconnect_delay(), [&obj]()->bool{
-                             obj->async_connect();
+                             if (!obj->async_connect())
+                                 std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
                              return false;
                          });
                      }
@@ -670,8 +672,9 @@ namespace shine
             /**
             *@brief 新建一个客户端连接
             *@param name 名称
-            *@param addr 对端地址host:port / ip:port
+            *@param conn_addr 对端地址host:port / ip:port
             *@param cb 连接回调
+            *@param bind_addr 本端地址host:port / ip:port
             *@param reconnect 是否自动重连
             *@param reconnect_delay 自动重连间隔
             *@return bool
@@ -679,24 +682,30 @@ namespace shine
             *@note
             */
 
-            bool add_connector(const string &name, const string &addr, connect_callback_t cb, bool reconnect = true, uint32 reconnect_delay = 5000) {
+            bool add_connector(const string &name, const string &conn_addr, connect_callback_t cb, const string bind_addr = "0.0.0.0:0", bool reconnect = true, uint32 reconnect_delay = 5000) {
                 if (_iocp == nullptr)
                     return false;
 
-                address_info_t info;
-                if (!socket::parse_addr(addr, info))
+                address_info_t conn_info;
+                if (!socket::parse_addr(conn_addr, conn_info))
+                    return false;
+
+                address_info_t bind_info;
+                if (!socket::parse_addr(bind_addr, bind_info))
                     return false;
 
                 connector *conn = new connector;
                 conn->set_timer_manager(&_timer);
                 conn->set_kernel_fd(_iocp);
-                conn->set_remote_addr(info);
+                conn->set_remote_addr(conn_info);
+                conn->set_local_addr(bind_info);
                 conn->set_name(name);
                 conn->set_reconnect(reconnect);
                 conn->set_reconnect_delay(reconnect_delay);
                 conn->register_connect_callback(cb);
 
                 if (!conn->async_connect()) {
+                    std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
                     conn->close();
                     return false;
                 }

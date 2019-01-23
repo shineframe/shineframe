@@ -111,22 +111,17 @@ namespace shine
 
             for (;;)
             {
-                if ((p[i] & 0x80) == 0x80)
-                {
-                    if (i < len - 1)
-                    {
-                        val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
-                        i++;
-                    }
-                    else
+                val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
+                if (p[i++] & 0x80) {
+                    if (i >= len)
                         return 0;
                 }
-                else
-                {
-                    val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
-                    return i + 1;
+                else {
+                    break;
                 }
             }
+
+            return i;
         }
     }
 

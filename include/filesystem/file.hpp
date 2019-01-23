@@ -75,10 +75,12 @@ namespace shine
             }
 
             _file = fopen(path.c_str(), "rb+");
+            _path = path;
             return _file != 0;
         }
 
         void close(){
+            _path.clear();
             if (_file == 0) return;
 
             fclose(_file);
@@ -179,7 +181,12 @@ namespace shine
 
             return ret;
         }
+
+        const string &path() const{
+            return _path;
+        }
     private:
         FILE *_file = 0;
+        string _path;
     };
 }

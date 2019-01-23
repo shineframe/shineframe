@@ -383,7 +383,7 @@ namespace shine
             return ret;
         }
 
-        std::vector<string> split(const std::string &des){
+        std::vector<string> split(const std::string &des) const{
             return std::move(split(*this, des));
         }
 

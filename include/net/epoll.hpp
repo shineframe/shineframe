@@ -365,7 +365,8 @@ namespace shine
                     if (get_socket_fd() == invalid_socket)
                     {
                         get_timer_manager()->set_timer(get_reconnect_delay(), [this]()->bool{
-                            this->async_connect();
+                            if (!this->async_connect())
+                                std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
                             return false;
                         });
                     }
@@ -383,9 +384,10 @@ namespace shine
                 if (get_socket_fd() == invalid_socket)
                     return false;
 
-                shine::string addr = string::format_create("%s:%d", get_remote_addr().get_ip().c_str(), get_remote_addr().get_port());
+                if (!socket::bind(get_socket_fd(), get_local_addr().get_address_string()))
+                    return false;
 
-                if (socket::connect(get_socket_fd(), addr, 0))
+                if (socket::connect(get_socket_fd(), get_remote_addr().get_address_string(), 0))
                 {
                     socket::set_noblock(get_socket_fd());
                     set_type(peer::e_connection);
@@ -571,34 +573,40 @@ namespace shine
             /**
             *@brief 新建一个客户端连接
             *@param name 名称
-            *@param addr 对端地址host:port / ip:port
+            *@param conn_addr 对端地址host:port / ip:port
             *@param cb 连接回调
+            *@param bind_addr 本端地址host:port / ip:port
             *@param reconnect 是否自动重连
             *@param reconnect_delay 自动重连间隔
             *@return bool
             *@warning
             *@note
             */
-            bool add_connector(const string &name, const string &addr, connect_callback_t cb, bool reconnect = true, uint32 reconnect_delay = 5000) {
+            bool add_connector(const string &name, const string &conn_addr, connect_callback_t cb, const string bind_addr = "0.0.0.0:0", bool reconnect = true, uint32 reconnect_delay = 5000) {
 
                 if (get_epoll_fd() == invalid_socket)
                     return false;
 
-                address_info_t info;
-                if (!socket::parse_addr(addr, info))
+                address_info_t conn_info;
+                if (!socket::parse_addr(conn_addr, conn_info))
+                    return false;
+
+                address_info_t bind_info;
+                if (!socket::parse_addr(bind_addr, bind_info))
                     return false;
 
                 connector *conn = new connector;
                 conn->set_timer_manager(&_timer);
                 conn->set_kernel_fd(get_epoll_fd());
-                conn->get_remote_addr().get_ip().assign(info.get_ip().c_str());
-                conn->get_remote_addr().get_port() = info.get_port();
+                conn->set_remote_addr(conn_info);
+                conn->set_local_addr(bind_info);
                 conn->set_name(name);
                 conn->set_reconnect(reconnect);
                 conn->set_reconnect_delay(reconnect_delay);
                 conn->register_connect_callback(cb);
 
                 if (!conn->async_connect()) {
+                    std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
                     conn->close();
                     return false;
                 }

@@ -72,6 +72,12 @@ namespace shine
 {
     namespace net{
         struct address_info_t{
+            string get_address_string() const {
+                string ret = get_ip();
+                ret += ":";
+                ret += get_port();
+                return std::move(ret);
+            }
             SHINE_GEN_MEMBER_GETSET(shine::string, ip);
             SHINE_GEN_MEMBER_GETSET(uint16, port);
         };
@@ -136,6 +142,13 @@ namespace shine
 #else
                 return errno;
 #endif
+            }
+
+            static const char *get_error_str(int err){
+#ifdef SHINE_OS_WINDOWS
+#pragma warning(disable:4996)
+#endif
+                return strerror(err);
             }
 
             /** 

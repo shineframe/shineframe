@@ -26,6 +26,7 @@ struct A{
     SHINE_JSON_MODEL(A, a, b, c, d, e, f, g, h, i);
 };
 
+
 int main(){
 
     A a;
@@ -41,8 +42,8 @@ int main(){
 
     a.d.emplace(999, b);
 
-    a.e.emplace_back(123);
-    a.e.emplace_back(345);
+    //a.e.emplace_back(123);
+    //a.e.emplace_back(345);
 
     a.f.emplace_back((float)12.34);
     a.f.emplace_back((float)45.67);

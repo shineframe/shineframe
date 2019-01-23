@@ -147,7 +147,7 @@ namespace shine
             return std::move(ret);
         }
 
-        bool unlink(const string &path) {
+        inline bool unlink(const string &path) {
             return !!DeleteFile(path.c_str());
         }
 
@@ -197,7 +197,7 @@ namespace shine
             e_unknown,
         };
 
-        type file_type(const string &path) {
+        inline type file_type(const string &path) {
             DWORD dwAttr;
             dwAttr = GetFileAttributes(path.c_str());
             if (dwAttr == INVALID_FILE_ATTRIBUTES)
@@ -224,7 +224,7 @@ namespace shine
             return !!(dwAttr & (FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE));
         }
 
-        std::vector<string> ls(const string &path) {
+        inline std::vector<string> ls(const string &path) {
             std::vector<string> ret;
             WIN32_FIND_DATA find_data;
             HANDLE handle = ::FindFirstFile((path + "*.*").c_str(), &find_data);

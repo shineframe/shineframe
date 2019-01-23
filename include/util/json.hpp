@@ -52,10 +52,10 @@
 #define JSON_DECODE(...) JSON_GEN_DECODE_FUNC(GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
 
 #define SHINE_JSON_MODEL(TYPE, ...) shine::string json_encode(){\
-    shine::string ret = "{"; \
+    shine::string ret; \
     bool empty = true; \
     JSON_ENCODE(__VA_ARGS__); \
-    ret += "}"; \
+if (!empty){ ret.insert(0, "{"); ret += "}"; }\
     return ret; \
     }\
     \
@@ -504,7 +504,7 @@ namespace shine
             return 0;
         }
 
-        void foreach_kv_childs(std::function<void(const string &, const json_node_t &)> func)
+        void foreach_kv_childs(std::function<void(const string &, const json_node_t &)> func) const
         {
             if (get_kv_childs())
             {
@@ -561,7 +561,7 @@ namespace shine
             return *this;
         }
 
-        size_t get_array_childs_size()
+        size_t get_array_childs_size() const
         {
             if (get_array_childs())
                 return get_array_childs()->size();
@@ -569,7 +569,7 @@ namespace shine
             return 0;
         }
 
-        void foreach_array_childs(std::function<void(const size_type, const json_node_t &)> func)
+        void foreach_array_childs(std::function<void(const size_type, const json_node_t &)> func) const
         {
             if (get_array_childs())
             {
@@ -615,7 +615,7 @@ namespace shine
             return *this;
         }
 
-        json_node_t *get_array_child(size_type index)
+        json_node_t *get_array_child(size_type index) const
         {
             if (get_array_childs() && get_array_childs()->size() > index)
                     return &(*get_array_childs())[index];
@@ -712,8 +712,9 @@ inline void json_decode_field(bool &val, shine::json_node_t *node){
     inline shine::string json_encode_field(const TYPE &val){\
         shine::string ret; \
         shine::json_node_t::encode_string(ret, val); \
+        if (!ret.empty()){\
         ret.insert(0, "\""); \
-        ret += '\"'; \
+        ret += '\"'; }\
         return ret; \
     }
 
@@ -886,7 +887,7 @@ if (!empty)\
     inline void json_decode_field(TYPE<T> &val, shine::json_node_t *node){\
     node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){\
     T v;\
-    ::json_decode_field(v, (shine::json_node_t *)&value); \
+    json_decode_field(v, (shine::json_node_t *)&value); \
     val.emplace_back(std::move(v)); \
     }); \
     }
@@ -906,7 +907,7 @@ template<typename T>
 inline void json_decode_field(std::forward_list<T> &val, shine::json_node_t *node){
         node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){
         T v; 
-        ::json_decode_field(v, (shine::json_node_t *)&value);
+        json_decode_field(v, (shine::json_node_t *)&value);
         val.emplace_front(std::move(v));
     }); 
 }
@@ -919,7 +920,7 @@ inline void json_decode_field(std::forward_list<T> &val, shine::json_node_t *nod
     inline void json_decode_field(TYPE<T> &val, shine::json_node_t *node){\
     node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){\
     T v;\
-    ::json_decode_field(v, (shine::json_node_t *)&value); \
+    json_decode_field(v, (shine::json_node_t *)&value); \
     val.emplace(std::move(v)); \
     }); \
     }
