@@ -209,7 +209,6 @@ public:
 private:
 };
 
-
 int main(){
     warp kv_example("raft.cfg");
     std::this_thread::sleep_for(std::chrono::seconds(2));
