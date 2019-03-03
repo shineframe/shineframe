@@ -95,9 +95,11 @@ namespace shine
         std::string number_to_string(const int8 *fmt, const T &num){
             int8 buf[64];
             size_t len = SHINE_SNPRINTF(buf, sizeof(buf), fmt, num);
-            if (strstr(buf, ".") != NULL)
+            char *pos = strstr(buf, ".");
+            if (pos != NULL)
             {
-                while (len > 1 && buf[--len] == '0')
+                pos += 2;
+                while (len > (size_t)(pos - buf) && buf[--len] == '0')
                     buf[len] = '\0';
             }
 
