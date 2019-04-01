@@ -1,23 +1,4 @@
- /**
- *****************************************************************************
- *
- *@note shineframe开发框架 https://github.com/shineframe/shineframe
- *
- *@file json.hpp
- *
- *@brief json解析库 -- shine json model
- *
- *使用SHINE_JSON_MODEL宏，只需要一行代码即可完成C++对象与json字符串之间的互相转换
- *
- *@todo 
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/14 
- *****************************************************************************
- */
+
 
 #pragma once
 #include <string>
@@ -839,6 +820,7 @@ if (!empty)\
 #define JSON_DECODE_MAP_FIELD(TYPE) \
     template<typename T1, typename T2>\
     inline void json_decode_field(TYPE<T1, T2> &val, shine::json_node_t *node){\
+	val.clear();\
     node->foreach_kv_childs([&val](const shine::string &key, const shine::json_node_t &value){\
         shine::json_node_t tmp;\
         tmp.set_string(key);\
@@ -885,6 +867,7 @@ if (!empty)\
 #define JSON_DECODE_ARRAY_FIELD(TYPE) \
     template<typename T>\
     inline void json_decode_field(TYPE<T> &val, shine::json_node_t *node){\
+	val.clear();\
     node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){\
     T v;\
     json_decode_field(v, (shine::json_node_t *)&value); \
@@ -905,10 +888,11 @@ JSON_ENCODE_ARRAY_FIELD(std::forward_list);
 
 template<typename T>
 inline void json_decode_field(std::forward_list<T> &val, shine::json_node_t *node){
-        node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){
-        T v; 
-        json_decode_field(v, (shine::json_node_t *)&value);
-        val.emplace_front(std::move(v));
+	val.clear(); 
+	node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value) {
+    T v; 
+    json_decode_field(v, (shine::json_node_t *)&value);
+    val.emplace_front(std::move(v));
     }); 
 }
 
@@ -918,6 +902,7 @@ inline void json_decode_field(std::forward_list<T> &val, shine::json_node_t *nod
 #define JSON_DECODE_SET_FIELD(TYPE) \
     template<typename T>\
     inline void json_decode_field(TYPE<T> &val, shine::json_node_t *node){\
+	val.clear();\
     node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){\
     T v;\
     json_decode_field(v, (shine::json_node_t *)&value); \
