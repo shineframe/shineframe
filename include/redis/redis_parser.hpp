@@ -19,13 +19,15 @@
 #else
 #endif
 
-#define SYNC_CALL(ret, ...)  if (!get_sync_client()->call(request::encode({__VA_ARGS__}))) \
+#define SYNC_CALL(ret, ...)  SYNC_DATA_CLEAR;\
+	if (!get_sync_client()->call(request::encode({__VA_ARGS__}))) \
     return ret;\
     if (SYNC_HEADER_TYPE == e_type_error){\
         std::cout << __FUNCTION__ << "  " << SYNC_HEADER_VALUE << std::endl;\
-        return ret;}
+        return ret;}\
 
 
+#define SYNC_DATA_CLEAR get_sync_client()->get_response().get_data().clear()
 #define SYNC_DATA_VALUE get_sync_client()->get_response().get_data()
 #define SYNC_HEADER_TYPE get_sync_client()->get_response().get_data().get_type()
 #define SYNC_HEADER_VALUE get_sync_client()->get_response().get_data().get_value()
@@ -84,6 +86,7 @@ namespace shine
 
             inline void clear()
             {
+				get_value().clear();
                 if (get_clients())
                 {
                     array_data_t& clients = *get_clients();

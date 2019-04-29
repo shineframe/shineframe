@@ -409,6 +409,8 @@ namespace shine
 
             void close_connection()
             {
+				get_buf().clear();
+				get_buf_pos() = 0;
                 if (get_socket_fd() != invalid_socket)
                 {
                     net::socket::close(get_socket_fd());
@@ -426,8 +428,9 @@ namespace shine
                     if (get_addr().find(":") == string::npos)
                         return false;
 
-                    if (!net::socket::connect(get_socket_fd(), get_addr(), get_recv_timeout()))
+                    if (!net::socket::connect(get_socket_fd(), get_addr(), 5000))
                     {
+						std::cout << __FUNCTION__ << " connect failed." << std::endl;
                         close_connection();
                         return false;
                     }
@@ -467,6 +470,7 @@ namespace shine
             }
 
             bool call(const string &data){
+
                 if (!reset_socket())
                     return false;
 
