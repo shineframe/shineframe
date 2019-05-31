@@ -58,372 +58,363 @@ if (!empty){ ret.insert(0, "{"); ret += "}"; }\
 
 namespace shine
 {
-    class json_node_t{
-        friend class json;
-        friend class convert;
-    public:
-        typedef std::shared_ptr<std::map<string, json_node_t> > kv_childs_t;
-        typedef std::shared_ptr<std::deque<json_node_t> > array_childs_t;
+	class json_node_t {
+		friend class json;
+		friend class convert;
+	public:
+		typedef std::shared_ptr<std::map<string, json_node_t> > kv_childs_t;
+		typedef std::shared_ptr<std::deque<json_node_t> > array_childs_t;
 
-        enum {
-            e_string = 0,
-            e_integer = 1,
-            e_float = 2,
-            e_boolean = 3,
-            e_null = 4,
-            e_object = 5,
-            e_array = 6,
-            e_root = 7,
-        };
+		enum {
+			e_string = 0,
+			e_integer = 1,
+			e_float = 2,
+			e_boolean = 3,
+			e_null = 4,
+			e_object = 5,
+			e_array = 6,
+			e_root = 7,
+		};
 
-        enum {
-            e_decode_key = 0,
-            e_decode_type = 1,
-            e_decode_value = 2,
-            e_decode_end = 3,
-        };
+		enum {
+			e_decode_key = 0,
+			e_decode_type = 1,
+			e_decode_value = 2,
+			e_decode_end = 3,
+		};
 
-    private:
-        static inline bool skip_space(const string &data, size_t &pos){
-            while (pos < data.size()
-                && (data[pos] == '\r' || data[pos] == '\n'
-                || data[pos] == '\t' || data[pos] == ' '))
-            {
-                ++pos;
-            }
+	private:
+		static inline bool skip_space(const string &data, size_t &pos) {
+			while (pos < data.size()
+				&& (data[pos] == '\r' || data[pos] == '\n'
+					|| data[pos] == '\t' || data[pos] == ' '))
+			{
+				++pos;
+			}
 
-            return pos < data.size();
-        }
+			return pos < data.size();
+		}
 
-        static inline bool skip_number(const string &data, size_t &pos){
-            while (pos < data.size()
-                && ((data[pos] >= '0' && data[pos] <= '9') || data[pos] == '.' || data[pos] == '-'))
-            {
-                ++pos;
-            }
+		static inline bool skip_number(const string &data, size_t &pos) {
+			while (pos < data.size()
+				&& ((data[pos] >= '0' && data[pos] <= '9') || data[pos] == '.' || data[pos] == '-'))
+			{
+				++pos;
+			}
 
-            return pos < data.size();
-        }
+			return pos < data.size();
+		}
 
-        static inline bool find(int8 ch, const string &data, size_t &pos){
-            while (pos < data.size() && data[pos] != ch)
-            {
-                ++pos;
-            }
+		static inline bool find(int8 ch, const string &data, size_t &pos) {
+			while (pos < data.size() && data[pos] != ch)
+			{
+				++pos;
+			}
 
-            return pos < data.size();
-        }
+			return pos < data.size();
+		}
 
 #define SKIP_SPACE() if (!skip_space(data, cost_len)) return false;
 
-        static bool parse_number(json_node_t &node, const string &data, size_t &cost_len)
-        {
-            size_t value_begin = cost_len++;
-            if (!skip_number(data, cost_len))
-                return false;
+		static bool parse_number(json_node_t &node, const string &data, size_t &cost_len)
+		{
+			size_t value_begin = cost_len++;
+			if (!skip_number(data, cost_len))
+				return false;
 
-            node.get_value().assign(data.data() + value_begin, cost_len - value_begin);
+			node.get_value().assign(data.data() + value_begin, cost_len - value_begin);
 
-            string &value = node.get_value();
-            auto tmp = value.find_first_of('.');
-            if (tmp != value.find_last_of('.') 
-                || value[value.size() - 1] == '.' 
-                || (value.find_first_of('-') != 0 && value.find_first_of('-') != string::npos)
-                || (value.size() >= 2 && value[0] == '-' && value[1] == '.')
-                )
-                return false;
+			string &value = node.get_value();
+			auto tmp = value.find_first_of('.');
+			if (tmp != value.find_last_of('.')
+				|| value[value.size() - 1] == '.'
+				|| (value.find_first_of('-') != 0 && value.find_first_of('-') != string::npos)
+				|| (value.size() >= 2 && value[0] == '-' && value[1] == '.')
+				)
+				return false;
 
-            node.set_type(tmp == string::npos ? e_integer : e_float);
-                return true;
+			node.set_type(tmp == string::npos ? e_integer : e_float);
+			return true;
 
-        }
+		}
 
-        static bool parse_string(json_node_t &node, const string &data, size_t &cost_len)
-        {
-            int8 ch = data[cost_len++];
-            size_t value_begin = cost_len;
+		static bool parse_string(json_node_t &node, const string &data, size_t &cost_len)
+		{
+			int8 ch = data[cost_len++];
+			size_t value_begin = cost_len;
 
-            for (;;)
-            {
-                if (!find(ch, data, cost_len))
-                    return false;
+			for (;;)
+			{
+				if (!find(ch, data, cost_len))
+					return false;
 
-                if (data[cost_len - 1] != '\\')
-                    break;
-                else
-                {
-                    ++cost_len;
-                    continue;
-                }
+				if (data[cost_len - 1] != '\\')
+					break;
+				else
+				{
+					++cost_len;
+					continue;
+				}
 
-            }
+			}
 
-            node.get_value().assign(data.data() + value_begin, cost_len - value_begin);
-            node.set_type(e_string);
-            node.set_decode_step(e_decode_end);
+			node.get_value().assign(data.data() + value_begin, cost_len - value_begin);
+			node.set_type(e_string);
+			node.set_decode_step(e_decode_end);
 
-            ++cost_len;
+			++cost_len;
 
-            return true;
+			return true;
 
-        }
+		}
 
-        static bool parse_symbol(json_node_t &node, const string &data, size_t &cost_len, uint8 type, const string &symbol)
-        {
-            cost_len += symbol.size();
-            SKIP_SPACE();
+		static bool parse_symbol(json_node_t &node, const string &data, size_t &cost_len, uint8 type, const string &symbol)
+		{
+			cost_len += symbol.size();
+			SKIP_SPACE();
 
-            if (data[cost_len] != ',' && data[cost_len] != '}')
-                return false;
+			if (data[cost_len] != ',' && data[cost_len] != '}')
+				return false;
 
-            node.set_type(type);
-            node.get_value() = symbol;
-            node.set_decode_step(e_decode_end);
+			node.set_type(type);
+			node.get_value() = symbol;
+			node.set_decode_step(e_decode_end);
 
-            return true;
+			return true;
 
-        }
+		}
 
-        static bool parse_object(json_node_t &node, const string &data, size_t &cost_len, uint8 decode_step, int8 symbol)
-        {
-            for (;;)
-            {
-                json_node_t sub_node;
-                sub_node.set_decode_step(decode_step);
-                if (!decode(sub_node, data, cost_len))
-                    return false;
+		static bool parse_object(json_node_t &node, const string &data, size_t &cost_len, uint8 decode_step, int8 symbol)
+		{
+			for (;;)
+			{
+				json_node_t sub_node;
+				sub_node.set_decode_step(decode_step);
+				if (!decode(sub_node, data, cost_len))
+					return false;
 
-                SKIP_SPACE();
+				SKIP_SPACE();
 
-                if (sub_node.get_key().empty())
-                {
-                    if (!node.get_array_childs())
-                        node.get_array_childs() = std::make_shared<std::deque<json_node_t>>();
-                    node.get_array_childs()->push_back(std::move(sub_node));
-                }
-                else
-                {
-                    if (!node.get_kv_childs())
-                        node.get_kv_childs() = std::make_shared<std::map<string, json_node_t>>();
+				if (sub_node.get_key().empty())
+				{
+					if (!node.get_array_childs())
+						node.get_array_childs() = std::make_shared<std::deque<json_node_t>>();
+					node.get_array_childs()->push_back(std::move(sub_node));
+				}
+				else
+				{
+					if (!node.get_kv_childs())
+						node.get_kv_childs() = std::make_shared<std::map<string, json_node_t>>();
 
-                    node.get_kv_childs()->emplace(sub_node.get_key(), std::move(sub_node));
-                }
+					node.get_kv_childs()->emplace(sub_node.get_key(), std::move(sub_node));
+				}
 
-                if (data[cost_len] == symbol)
-                {
-                    ++cost_len;
-                    node.set_decode_step(e_decode_end);
-                    return true;
-                }
-                else if (data[cost_len] == ',')
-                {
-                    ++cost_len;
-                    continue;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-        }
+				if (data[cost_len] == symbol)
+				{
+					++cost_len;
+					node.set_decode_step(e_decode_end);
+					return true;
+				}
+				else if (data[cost_len] == ',')
+				{
+					++cost_len;
+					continue;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		}
 
-        static bool decode(json_node_t& node, const string &data, size_t &cost_len){
+		static bool decode(json_node_t& node, const string &data, size_t &cost_len) {
 
-            if (node.get_decode_step() == e_decode_key)
-            {
-                SKIP_SPACE();
+			if (node.get_decode_step() == e_decode_key)
+			{
+				SKIP_SPACE();
 
-                int8 ch = data[cost_len];
-                if (ch == '\'' || ch == '"')
-                {
-                    size_t key_begin = ++cost_len;
-                    
-                    for (;;)
-                    {
-                        if (!find(ch, data, cost_len))
-                            return false;
+				int8 ch = data[cost_len];
+				if (ch == '\'' || ch == '"')
+				{
+					size_t key_begin = ++cost_len;
 
-                        if (data[cost_len - 1] != '\\')
-                            break;
-                        else
-                            ++cost_len;
-                    }
+					if (!find(ch, data, cost_len))
+						return false;
 
-                    node.get_key().assign(data.data() + key_begin, cost_len - key_begin);
-                    node.set_decode_step(e_decode_type);
-                }
-                else if (ch == '}')
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
+					node.get_key().assign(data.data() + key_begin, cost_len - key_begin);
+					++cost_len;
+					node.set_decode_step(e_decode_type);
+				}
+				else if (ch == '}')
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
 
-            if (node.get_decode_step() == e_decode_type)
-            {
-                SKIP_SPACE();
+			if (node.get_decode_step() == e_decode_type)
+			{
+				SKIP_SPACE();
 
-                if (!node.get_key().empty())
-                {
-                    if (data[++cost_len] != ':')
-                        return false;
+				if (!node.get_key().empty())
+				{
+					if (data[cost_len++] != ':')
+						return false;
+					SKIP_SPACE();
+				}
 
-                    ++cost_len;
-                    SKIP_SPACE();
-                }
+				int8 ch = data[cost_len];
+				if (ch == '{')
+				{
+					++cost_len;
+					node.set_type(e_object);
+					node.set_decode_step(e_decode_value);
+				}
+				else if (ch == '[')
+				{
+					++cost_len;
+					node.set_type(e_array);
+					node.set_decode_step(e_decode_value);
+				}
+				else if ((ch >= '0' && ch <= '9') || (ch == '-' && data[cost_len + 1] >= '0' && data[cost_len + 1] <= '9'))
+				{
+					return parse_number(node, data, cost_len);
+				}
+				else if (ch == '"' || ch == '\'')
+				{
+					return parse_string(node, data, cost_len);
+				}
+				else if (memcmp(data.data() + cost_len, "true", 4) == 0)
+				{
+					return parse_symbol(node, data, cost_len, e_boolean, "true");
+				}
+				else if (memcmp(data.data() + cost_len, "false", 5) == 0)
+				{
+					return parse_symbol(node, data, cost_len, e_boolean, "false");
+				}
+				else if (memcmp(data.data() + cost_len, "null", 4) == 0)
+				{
+					return parse_symbol(node, data, cost_len, e_null, "null");
+				}
+			}
 
-                int8 ch = data[cost_len];
-                if (ch == '{')
-                {
-                    ++cost_len;
-                    node.set_type(e_object);
-                    node.set_decode_step(e_decode_value);
-                }
-                else if (ch == '[')
-                {
-                    ++cost_len;
-                    node.set_type(e_array);
-                    node.set_decode_step(e_decode_value);
-                }
-                else if ((ch >= '0' && ch <= '9') || (ch == '-' && data[cost_len + 1] >= '0' && data[cost_len + 1] <= '9'))
-                {
-                    return parse_number(node, data, cost_len);
-                }
-                else if (ch == '"' || ch == '\'')
-                {
-                    return parse_string(node, data, cost_len);
-                }
-                else if (memcmp(data.data() + cost_len, "true", 4) == 0)
-                {
-                    return parse_symbol(node, data, cost_len, e_boolean, "true");
-                }
-                else if (memcmp(data.data() + cost_len, "false", 5) == 0)
-                {
-                    return parse_symbol(node, data, cost_len, e_boolean, "false");
-                }
-                else if (memcmp(data.data() + cost_len, "null", 4) == 0)
-                {
-                    return parse_symbol(node, data, cost_len, e_null, "null");
-                }
-            }
+			if (node.get_decode_step() == e_decode_value)
+			{
+				if (node.get_type() == e_object)
+				{
+					return parse_object(node, data, cost_len, e_decode_key, '}');
+				}
+				else if (node.get_type() == e_array)
+				{
+					return parse_object(node, data, cost_len, e_decode_type, ']');
+				}
+			}
+			return true;
+		}
 
-            if (node.get_decode_step() == e_decode_value)
-            {
-                if (node.get_type() == e_object)
-                {
-                    return parse_object(node, data, cost_len, e_decode_key, '}');
-                }
-                else if (node.get_type() == e_array)
-                {
-                    return parse_object(node, data, cost_len, e_decode_type, ']');
-                }
-            }
-            return true;
-        }
+	public:
+		static void encode_string(string &out, const string &in)
+		{
+			for (size_t i = 0; i < in.size(); i++)
+			{
+				switch (in[i])
+				{
+				case '\\':
+					out += "\\\\";
+					break;
+				case '"':
+					out += "\\\"";
+					break;
+					//                     case '/':
+					//                         out += "\\/";
+					//                         break;
+				case '\b':
+					out += "\\b";
+					break;
+				case '\f':
+					out += "\\f";
+					break;
+				case '\t':
+					out += "\\t";
+					break;
+				case '\n':
+					out += "\\n";
+					break;
+				case '\r':
+					out += "\\r";
+					break;
+				default:
+					out += in[i];
+					break;
+				}
 
-        public:
-        static void encode_string(string &out, const string &in)
-        {
-            for (size_t i = 0; i < in.size(); i++)
-            {
-                switch (in[i])
-                {
-            		case '\\':
-                        out += "\\\\";
-                        break;
-                    case '"':
-                        out += "\\\"";
-                        break;
-//                     case '/':
-//                         out += "\\/";
-//                         break;
-                    case '\b':
-                        out += "\\b";
-                        break;
-                    case '\f':
-                        out += "\\f";
-                        break;
-                    case '\t':
-                        out += "\\t";
-                        break;
-                    case '\n':
-                        out += "\\n";
-                        break;
-                    case '\r':
-                        out += "\\r";
-                        break;
-                    default:
-                        out += in[i];
-                        break;
-                }
+			}
+		}
 
-            }
-        }
+	private:
+		static void encode(json_node_t &node, string &data)
+		{
+			if (!node.get_key().empty())
+			{
+				data += "\"";
+				encode_string(data, node.get_key());
+				data += "\":";
+			}
 
-        private:
-        static void encode(json_node_t &node, string &data)
-        {
-            if (!node.get_key().empty())
-            {
-                data += "\"";
-                encode_string(data, node.get_key());
-                data += "\":";
-            }
+			if (node.get_type() == e_string)
+			{
+				data += "\"";
+				encode_string(data, node.get_value());
+				data += "\"";
+			}
+			else if (node.get_type() == e_object)
+			{
+				data += "{";
 
-            if (node.get_type() == e_string)
-            {
-                data += "\"";
-                encode_string(data, node.get_value());
-                data += "\"";
-            }
-            else if (node.get_type() == e_object)
-            {
-                data += "{";
+				if (node.get_kv_childs())
+				{
+					bool flag = false;
+					for (auto iter : *node.get_kv_childs())
+					{
+						if (flag)
+							data += ",";
 
-                if (node.get_kv_childs())
-                {
-                    bool flag = false;
-                    for (auto iter : *node.get_kv_childs())
-                    {
-                        if (flag)
-                            data += ",";
+						encode(iter.second, data);
+						flag = true;
+					}
+				}
 
-                        encode(iter.second, data);                     
-                        flag = true;
-                    }
-                }
+				data += "}";
+			}
+			else if (node.get_type() == e_array)
+			{
+				data += "[";
 
-                data += "}";
-            }
-            else if (node.get_type() == e_array)
-            {
-                data += "[";
+				if (node.get_array_childs())
+				{
+					bool flag = false;
+					for (auto &iter : *node.get_array_childs())
+					{
+						if (flag)
+							data += ",";
 
-                if (node.get_array_childs())
-                {
-                    bool flag = false;
-                    for (auto &iter : *node.get_array_childs())
-                    {
-                        if (flag)
-                            data += ",";
+						encode(iter, data);
+						flag = true;
+					}
+				}
 
-                        encode(iter, data);
-                        flag = true;
-                    }
-                }
+				data += "]";
+			}
+			else
+			{
+				data += node.get_value();
+			}
+		}
 
-                data += "]";
-            }
-            else
-            {
-                data +=  node.get_value();
-            }
-        }
-
-    public:
+	public:
 #define SET_TYPE(type) \
         if (get_type() != type)\
         {\
@@ -433,231 +424,231 @@ namespace shine
             get_value().clear(); \
         }
 
-        json_node_t &clear()
-        {
-            set_null();
-            return *this;
-        }
+		json_node_t &clear()
+		{
+			set_null();
+			return *this;
+		}
 
-        json_node_t &set_null()
-        {
-            SET_TYPE(e_null);
-            set_value("null");
-            return *this;
-        }
+		json_node_t &set_null()
+		{
+			SET_TYPE(e_null);
+			set_value("null");
+			return *this;
+		}
 
-        json_node_t &set_string(const string &value)
-        {
-            SET_TYPE(e_string);
+		json_node_t &set_string(const string &value)
+		{
+			SET_TYPE(e_string);
 
-            set_value(value);
-            return *this;
+			set_value(value);
+			return *this;
 
-        }
+		}
 
-        json_node_t &set_boolean(bool value)
-        {
-            SET_TYPE(e_boolean);
+		json_node_t &set_boolean(bool value)
+		{
+			SET_TYPE(e_boolean);
 
-            set_value(value ? "true" : "false");
-            return *this;
-        }
+			set_value(value ? "true" : "false");
+			return *this;
+		}
 
-        json_node_t &set_number(const string &value)
-        {
-            string tmp = value;
-            tmp += '\0';
-            size_t cost_len = 0;
-            if (parse_number(*this, tmp, cost_len))
-            {
-                get_kv_childs().reset();
-                get_array_childs().reset();
-            }
+		json_node_t &set_number(const string &value)
+		{
+			string tmp = value;
+			tmp += '\0';
+			size_t cost_len = 0;
+			if (parse_number(*this, tmp, cost_len))
+			{
+				get_kv_childs().reset();
+				get_array_childs().reset();
+			}
 
-            return *this;
-        }
+			return *this;
+		}
 
-        size_t get_kv_childs_size()
-        {
-            if (get_kv_childs())
-                return get_kv_childs()->size();
+		size_t get_kv_childs_size()
+		{
+			if (get_kv_childs())
+				return get_kv_childs()->size();
 
-            return 0;
-        }
+			return 0;
+		}
 
-        void foreach_kv_childs(std::function<void(const string &, const json_node_t &)> func) const
-        {
-            if (get_kv_childs())
-            {
-                for (auto iter : *get_kv_childs())
-                    func(iter.first, iter.second);
-            }
-        }
+		void foreach_kv_childs(std::function<void(const string &, const json_node_t &)> func) const
+		{
+			if (get_kv_childs())
+			{
+				for (auto iter : *get_kv_childs())
+					func(iter.first, iter.second);
+			}
+		}
 
-        json_node_t &insert_kv_child(json_node_t &node)
-        {
-            SET_TYPE(e_object);
+		json_node_t &insert_kv_child(json_node_t &node)
+		{
+			SET_TYPE(e_object);
 
-            if (!node.get_key().empty())
-            {
-                if (!get_kv_childs())
-                    get_kv_childs() = std::make_shared<std::map<string, json_node_t>>();
+			if (!node.get_key().empty())
+			{
+				if (!get_kv_childs())
+					get_kv_childs() = std::make_shared<std::map<string, json_node_t>>();
 
-                get_kv_childs()->emplace(node.get_key(), node);
-            }
+				get_kv_childs()->emplace(node.get_key(), node);
+			}
 
-            return *this;
-        }
+			return *this;
+		}
 
-        json_node_t &erase_kv_child(const string &key)
-        {
-            SET_TYPE(e_object);
+		json_node_t &erase_kv_child(const string &key)
+		{
+			SET_TYPE(e_object);
 
-            if (get_kv_childs())
-                get_kv_childs()->erase(key);
+			if (get_kv_childs())
+				get_kv_childs()->erase(key);
 
-            return *this;
-        }
+			return *this;
+		}
 
-        json_node_t *find_kv_child(const string &key){
-            if (get_type() != e_object)
-                return nullptr;
+		json_node_t *find_kv_child(const string &key) {
+			if (get_type() != e_object)
+				return nullptr;
 
-            if (get_kv_childs())
-            {
-                auto iter = get_kv_childs()->find(key);
-                if (iter != get_kv_childs()->end())
-                    return &iter->second;
-            }
+			if (get_kv_childs())
+			{
+				auto iter = get_kv_childs()->find(key);
+				if (iter != get_kv_childs()->end())
+					return &iter->second;
+			}
 
-            return nullptr;
-        }
+			return nullptr;
+		}
 
-        json_node_t &clear_kv_childs(const string &key)
-        {
-            SET_TYPE(e_object);
+		json_node_t &clear_kv_childs(const string &key)
+		{
+			SET_TYPE(e_object);
 
-            get_kv_childs().reset();
+			get_kv_childs().reset();
 
-            return *this;
-        }
+			return *this;
+		}
 
-        size_t get_array_childs_size() const
-        {
-            if (get_array_childs())
-                return get_array_childs()->size();
+		size_t get_array_childs_size() const
+		{
+			if (get_array_childs())
+				return get_array_childs()->size();
 
-            return 0;
-        }
+			return 0;
+		}
 
-        void foreach_array_childs(std::function<void(const size_type, const json_node_t &)> func) const
-        {
-            if (get_array_childs())
-            {
-                std::deque<json_node_t> &arr = *get_array_childs();
-                for (size_type i = 0; i < arr.size(); i++)
-                {
-                    func(i, arr[i]);
-                }
-            }
-        }
+		void foreach_array_childs(std::function<void(const size_type, const json_node_t &)> func) const
+		{
+			if (get_array_childs())
+			{
+				std::deque<json_node_t> &arr = *get_array_childs();
+				for (size_type i = 0; i < arr.size(); i++)
+				{
+					func(i, arr[i]);
+				}
+			}
+		}
 
-        json_node_t &push_back_array_child(json_node_t &node)
-        {
-            SET_TYPE(e_array);
+		json_node_t &push_back_array_child(json_node_t &node)
+		{
+			SET_TYPE(e_array);
 
-            if (!get_array_childs())
-                get_array_childs() = std::make_shared<std::deque<json_node_t>>();
+			if (!get_array_childs())
+				get_array_childs() = std::make_shared<std::deque<json_node_t>>();
 
-            get_array_childs()->push_back(node);
+			get_array_childs()->push_back(node);
 
-            return *this;
-        }
+			return *this;
+		}
 
-        json_node_t &push_front_array_child(json_node_t &node)
-        {
-            SET_TYPE(e_array);
+		json_node_t &push_front_array_child(json_node_t &node)
+		{
+			SET_TYPE(e_array);
 
-            if (!get_array_childs())
-                get_array_childs() = std::make_shared<std::deque<json_node_t>>();
+			if (!get_array_childs())
+				get_array_childs() = std::make_shared<std::deque<json_node_t>>();
 
-            get_array_childs()->push_front(node);
+			get_array_childs()->push_front(node);
 
-            return *this;
-        }
+			return *this;
+		}
 
-        json_node_t &erase_array_child(size_type index)
-        {
-            SET_TYPE(e_array);
+		json_node_t &erase_array_child(size_type index)
+		{
+			SET_TYPE(e_array);
 
-            if (get_array_childs() && get_array_childs()->size() > index)
-                    get_array_childs()->erase(get_array_childs()->begin() + index);
+			if (get_array_childs() && get_array_childs()->size() > index)
+				get_array_childs()->erase(get_array_childs()->begin() + index);
 
-            return *this;
-        }
+			return *this;
+		}
 
-        json_node_t *get_array_child(size_type index) const
-        {
-            if (get_array_childs() && get_array_childs()->size() > index)
-                    return &(*get_array_childs())[index];
+		json_node_t *get_array_child(size_type index) const
+		{
+			if (get_array_childs() && get_array_childs()->size() > index)
+				return &(*get_array_childs())[index];
 
-            return nullptr;
-        }
+			return nullptr;
+		}
 
-        json_node_t &clear_array_childs()
-        {
-            SET_TYPE(e_array);
+		json_node_t &clear_array_childs()
+		{
+			SET_TYPE(e_array);
 
-            get_array_childs().reset();
+			get_array_childs().reset();
 
-            return *this;
-        }
+			return *this;
+		}
 
-    private:
-        SHINE_GEN_MEMBER_GETSET(uint8, decode_step);
-        SHINE_GEN_MEMBER_GETSET(uint8, type, = e_null);
-        SHINE_GEN_MEMBER_GETSET(string, key);
-        SHINE_GEN_MEMBER_GETSET(string, value);
-        SHINE_GEN_MEMBER_GETSET(kv_childs_t, kv_childs);
-        SHINE_GEN_MEMBER_GETSET(array_childs_t, array_childs);
-    };
+	private:
+		SHINE_GEN_MEMBER_GETSET(uint8, decode_step);
+		SHINE_GEN_MEMBER_GETSET(uint8, type, = e_null);
+		SHINE_GEN_MEMBER_GETSET(string, key);
+		SHINE_GEN_MEMBER_GETSET(string, value);
+		SHINE_GEN_MEMBER_GETSET(kv_childs_t, kv_childs);
+		SHINE_GEN_MEMBER_GETSET(array_childs_t, array_childs);
+	};
 
-    SHINE_CHECK_MEMBER(encode);
+	SHINE_CHECK_MEMBER(encode);
 
-    class json
-    {
-    public:
-        json(){
-            get_root().set_decode_step(json_node_t::e_decode_type);
-        }
+	class json
+	{
+	public:
+		json() {
+			get_root().set_decode_step(json_node_t::e_decode_type);
+		}
 
-        /** 
-         *@brief 将json对象编码成json字符串
-         *@return shine::string 
-         *@warning 
-         *@note 
-        */
-        string encode(){
-            string str;
-            get_root().get_key().clear();
-            json_node_t::encode(get_root(), str);
-            return std::move(str);
-        }
+		/**
+		*@brief 将json对象编码成json字符串
+		*@return shine::string
+		*@warning
+		*@note
+		*/
+		string encode() {
+			string str;
+			get_root().get_key().clear();
+			json_node_t::encode(get_root(), str);
+			return std::move(str);
+		}
 
-        /** 
-         *@brief 将json字符串解码成json对象
-         *@param data 
-         *@return bool 
-         *@warning 
-         *@note 
-        */
-        bool decode(const string &data){
-            size_t cost_len = 0;
-            return json_node_t::decode(get_root(), data, cost_len);
-        }
+		/**
+		*@brief 将json字符串解码成json对象
+		*@param data
+		*@return bool
+		*@warning
+		*@note
+		*/
+		bool decode(const string &data) {
+			size_t cost_len = 0;
+			return json_node_t::decode(get_root(), data, cost_len);
+		}
 
-        SHINE_GEN_MEMBER_GETSET(json_node_t, root);
-    };
+		SHINE_GEN_MEMBER_GETSET(json_node_t, root);
+	};
 }
 
 
@@ -680,13 +671,13 @@ if (!empty) ret += ","; \
     if (node2) ::json_decode_field(this->field, node2); \
 }
 
-inline shine::string json_encode_field(bool val){
-    shine::string ret = val ? "true" : "false";
-    return ret;
+inline shine::string json_encode_field(bool val) {
+	shine::string ret = val ? "true" : "false";
+	return ret;
 }
 
-inline void json_decode_field(bool &val, shine::json_node_t *node){
-    val = node->get_value() == "true";
+inline void json_decode_field(bool &val, shine::json_node_t *node) {
+	val = node->get_value() == "true";
 }
 
 #define JSON_ENCODE_STRING_FIELD(TYPE) \
@@ -700,30 +691,30 @@ inline void json_decode_field(bool &val, shine::json_node_t *node){
     }
 
 JSON_ENCODE_STRING_FIELD(shine::string);
-inline void json_decode_field(shine::string &val, shine::json_node_t *node){
-    val = node->get_value();
+inline void json_decode_field(shine::string &val, shine::json_node_t *node) {
+	val = node->get_value();
 }
 
 JSON_ENCODE_STRING_FIELD(std::string);
-inline void json_decode_field(std::string &val, shine::json_node_t *node){
-    val = node->get_value();
+inline void json_decode_field(std::string &val, shine::json_node_t *node) {
+	val = node->get_value();
 }
 
-inline shine::string json_encode_field(const shine::int8 &val){
-        shine::string ret; 
-        ret += "\"";
-        ret += val;
-        ret += '\"'; 
-        return ret; 
+inline shine::string json_encode_field(const shine::int8 &val) {
+	shine::string ret;
+	ret += "\"";
+	ret += val;
+	ret += '\"';
+	return ret;
 }
 
-inline void json_decode_field(shine::int8 &val, shine::json_node_t *node){
-        val = node->get_value()[0];
+inline void json_decode_field(shine::int8 &val, shine::json_node_t *node) {
+	val = node->get_value()[0];
 }
 
 JSON_ENCODE_STRING_FIELD(shine::int8*);
-inline void json_decode_field(shine::int8 *&val, shine::json_node_t *node){
-    val = (shine::int8 *)node->get_value().c_str();
+inline void json_decode_field(shine::int8 *&val, shine::json_node_t *node) {
+	val = (shine::int8 *)node->get_value().c_str();
 }
 
 #define JSON_ENCODE_NUMERIC_FIELD(TYPE) \
@@ -732,58 +723,58 @@ inline void json_decode_field(shine::int8 *&val, shine::json_node_t *node){
     }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::int16);
-inline void json_decode_field(shine::int16 &val, shine::json_node_t *node){
-    val = (shine::int16)std::stol(node->get_value());
+inline void json_decode_field(shine::int16 &val, shine::json_node_t *node) {
+	val = (shine::int16)std::stol(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::uint16);
-inline void json_decode_field(shine::uint16 &val, shine::json_node_t *node){
-    val = (shine::uint16)std::stoul(node->get_value());
+inline void json_decode_field(shine::uint16 &val, shine::json_node_t *node) {
+	val = (shine::uint16)std::stoul(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::int32);
-inline void json_decode_field(shine::int32 &val, shine::json_node_t *node){
-    val = std::stol(node->get_value());
+inline void json_decode_field(shine::int32 &val, shine::json_node_t *node) {
+	val = std::stol(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::uint32);
-inline void json_decode_field(shine::uint32 &val, shine::json_node_t *node){
-    val = std::stoul(node->get_value());
+inline void json_decode_field(shine::uint32 &val, shine::json_node_t *node) {
+	val = std::stoul(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::Long);
-inline void json_decode_field(shine::Long &val, shine::json_node_t *node){
-    val = std::stol(node->get_value());
+inline void json_decode_field(shine::Long &val, shine::json_node_t *node) {
+	val = std::stol(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::uLong);
-inline void json_decode_field(shine::uLong &val, shine::json_node_t *node){
-    val = std::stoul(node->get_value());
+inline void json_decode_field(shine::uLong &val, shine::json_node_t *node) {
+	val = std::stoul(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::int64);
-inline void json_decode_field(shine::int64 &val, shine::json_node_t *node){
-    val = std::stoll(node->get_value());
+inline void json_decode_field(shine::int64 &val, shine::json_node_t *node) {
+	val = std::stoll(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::uint64);
-inline void json_decode_field(shine::uint64 &val, shine::json_node_t *node){
-    val = std::stoull(node->get_value());
+inline void json_decode_field(shine::uint64 &val, shine::json_node_t *node) {
+	val = std::stoull(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::Float);
-inline void json_decode_field(shine::Float &val, shine::json_node_t *node){
-    val = std::stof(node->get_value());
+inline void json_decode_field(shine::Float &val, shine::json_node_t *node) {
+	val = std::stof(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::Double);
-inline void json_decode_field(shine::Double &val, shine::json_node_t *node){
-    val = std::stod(node->get_value());
+inline void json_decode_field(shine::Double &val, shine::json_node_t *node) {
+	val = std::stod(node->get_value());
 }
 
 JSON_ENCODE_NUMERIC_FIELD(shine::LDouble);
-inline void json_decode_field(shine::LDouble &val, shine::json_node_t *node){
-    val = std::stold(node->get_value());
+inline void json_decode_field(shine::LDouble &val, shine::json_node_t *node) {
+	val = std::stold(node->get_value());
 }
 
 #define JSON_ENCODE_MAP_FIELD(TYPE) \
@@ -887,13 +878,13 @@ JSON_DECODE_ARRAY_FIELD(std::list);
 JSON_ENCODE_ARRAY_FIELD(std::forward_list);
 
 template<typename T>
-inline void json_decode_field(std::forward_list<T> &val, shine::json_node_t *node){
-	val.clear(); 
+inline void json_decode_field(std::forward_list<T> &val, shine::json_node_t *node) {
+	val.clear();
 	node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value) {
-    T v; 
-    json_decode_field(v, (shine::json_node_t *)&value);
-    val.emplace_front(std::move(v));
-    }); 
+		T v;
+		json_decode_field(v, (shine::json_node_t *)&value);
+		val.emplace_front(std::move(v));
+	});
 }
 
 #define JSON_ENCODE_SET_FIELD(TYPE) JSON_ENCODE_ARRAY_FIELD(TYPE)
