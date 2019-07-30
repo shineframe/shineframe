@@ -1,21 +1,4 @@
- /**
- *****************************************************************************
- *
- *@note shineframe开发框架 https://github.com/shineframe/shineframe
- *
- *@file log.hpp
- *
- *@brief 日志
- *
- *@todo 
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/14 
- *****************************************************************************
- */
+
 #pragma once
 
 #include "../common/define.hpp"
@@ -47,20 +30,21 @@ using namespace std;
 #endif
 
 const char* const log_level_desc[] = { "D", "I", "W", "E", "F" };
-#define log_buf_size  1024 * 10
+#define log_buf_size  2 * 1024 * 1024
 
 namespace shine
 {
     class log
     {
     public:
-        enum { e_debug, e_info, e_warning, e_error, e_fatal };
+        enum { e_debug = 0, e_info = 1, e_warning = 2, e_error = 3, e_fatal = 4 };
         enum { e_file = 1, e_console = 2, e_socket = 4 };
-
+        enum { e_no_split = 0, e_year = 4, e_month = 7, e_day = 10, e_hour = 13 };
     public:
-        void init(const std::string &filename, int filter_level = e_info) {
+        void init(const std::string &filename, int filter_level = e_info, int split = e_day) {
             _filename = filename;
             _filter_level = filter_level;
+            _split = split;
         }
 
     public:
@@ -89,7 +73,7 @@ namespace shine
 
             if (target & e_file)
             {
-                datetime[10] = '\0';
+                datetime[_split] = '\0';
                 char path[256];
                 auto path_len = SHINE_SNPRINTF(path, sizeof(path), "%s_%s.log", _filename.c_str(), datetime.c_str());
                 
@@ -112,6 +96,7 @@ namespace shine
     private:
         std::recursive_mutex _mutex;
         std::string _filename;
+        int _split;
         int _filter_level;
         char _buf[log_buf_size];
     };
