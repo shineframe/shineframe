@@ -106,7 +106,7 @@ namespace kv{
             if (!req.shine_serial_decode(data, len))
                 return;
 
-            _data.emplace(std::move(req.key), std::move(req.value));
+            _data[req.key] =req.value;
 
             if (output == nullptr)
                 return;
