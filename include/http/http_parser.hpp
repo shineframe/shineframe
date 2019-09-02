@@ -257,6 +257,7 @@ namespace shine
         class response : public header, public body
         {
         public:
+			typedef net::connection* connection_t;
             size_t decode_header(const int8 *data_, size_t len)
             {
                 int8 *data = (int8*)data_;
@@ -349,8 +350,8 @@ namespace shine
 
         private:
             SHINE_GEN_MEMBER_GETSET(uint16, status_code, = 200);
-            SHINE_GEN_MEMBER_GETSET(string, status_desc);
-        };
+			SHINE_GEN_MEMBER_GETSET(string, status_desc);
+		};
 
     }
 }

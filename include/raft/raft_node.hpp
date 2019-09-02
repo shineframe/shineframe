@@ -887,7 +887,7 @@ namespace shine
                 if (_leader)
                 {
                     rsp.result = raft_error::success;
-                    for (size_t i = msg.header.commit + 1; i < _commit_entry.entrys.size(); i++)
+                    for (size_t i = msg.header.commit + 1; i <= _commit_entry.entrys.size(); i++)
                     {
                         rsp.entrys.push_back(_commit_entry.entrys[i - 1]);
                         if (rsp.entrys.size() == 100)

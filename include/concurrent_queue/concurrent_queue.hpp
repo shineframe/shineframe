@@ -53,13 +53,13 @@ namespace shine {
             return _queue.enqueue_bulk(arr, count);
         }
 
-        bool pop(T &obj){
-            return _queue.try_dequeue(obj);
+        void pop(T &obj){
+            _queue.wait_dequeue(obj);
         }
 
         template<typename ARR>
         std::size_t pop_bulk(ARR arr, std::size_t count){
-            return _queue.try_dequeue_bulk(arr, count);
+            return _queue.wait_dequeue_bulk(arr, count);
         }
 
         std::size_t size_approx() const {

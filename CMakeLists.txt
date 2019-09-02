@@ -30,6 +30,8 @@ ADD_EXECUTABLE(redis_sync examples/redis_sync.cpp)
 
 ADD_EXECUTABLE(http_base_server examples/http_base_server.cpp)
 
+ADD_EXECUTABLE(http_base_server_multi_thread examples/http_base_server_multi_thread.cpp)
+
 ADD_EXECUTABLE(http_base_client examples/http_base_client.cpp)
 
 ADD_EXECUTABLE(proactor_echo_server examples/proactor_echo_server.cpp)
