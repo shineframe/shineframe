@@ -1,21 +1,3 @@
- /**
- *****************************************************************************
- *
- *@file socket.hpp
- *
- *@brief socket基本接口封装
- *
- *@todo 
- * 
- *@note shineframe开发框架 https://github.com/shineframe/shineframe
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/15 
- *****************************************************************************
- */
 #pragma once
 
 #include <iostream>
@@ -79,8 +61,9 @@ namespace shine
                 return std::move(ret);
             }
             SHINE_GEN_MEMBER_GETSET(shine::string, ip);
-            SHINE_GEN_MEMBER_GETSET(uint16, port);
-        };
+			SHINE_GEN_MEMBER_GETSET(uint16, port);
+			SHINE_GEN_MEMBER_GETSET(bool, v6, = false);
+		};
 
         class socket{
             friend class proactor_engine;
@@ -198,6 +181,8 @@ namespace shine
              *@note 
             */
             static bool bind(socket_t fd, const string &addr/*ip:port*/){
+                if (addr == "0.0.0.0:0")
+                    return true;
                 address_info_t info;
                 if (!parse_addr(addr, info))
                     return false;
@@ -254,103 +239,149 @@ namespace shine
                 return true;
             }
 
-            /** 
-             *@brief 套接字连接目标地址
-             *@param fd 套接字
-             *@param addr 目标地址
-             *@param timeout 连接超时时间，单位毫秒
-             *@return bool 
-             *@warning 
-             *@note 
-            */
-            static bool connect(socket_t fd, const string &addr, uint32 timeout)
-            {
-                address_info_t info;
-                if (!parse_addr(addr, info))
-                    return false;
+			/**
+			*@brief 套接字连接目标地址
+			*@param fd 套接字
+			*@param addr 目标地址
+			*@param timeout 连接超时时间，单位毫秒
+			*@return bool
+			*@warning
+			*@note
+			*/
+			static bool connect(socket_t fd, const string &addr, uint32 timeout)
+			{
+				address_info_t info;
+				if (!parse_addr(addr, info))
+					return false;
 
-                char ip[128];
-                SHINE_SNPRINTF(ip, sizeof(ip)-1, "%s", info.get_ip().c_str());
-                short port = info.get_port();
+				char ip[128];
+				SHINE_SNPRINTF(ip, sizeof(ip) - 1, "%s", info.get_ip().c_str());
+				short port = info.get_port();
 
-                void* svraddr = nullptr;
-                int32 svraddr_len = 0;
-                struct sockaddr_in svraddr_4;
-                struct sockaddr_in6 svraddr_6;
+				void* svraddr = nullptr;
+				int32 svraddr_len = 0;
+				struct sockaddr_in svraddr_4;
+				struct sockaddr_in6 svraddr_6;
 
-                struct addrinfo *result;
-                if (getaddrinfo(ip, NULL, NULL, &result) != 0)
-                    return false;
+				struct addrinfo *result;
+				if (getaddrinfo(ip, NULL, NULL, &result) != 0)
+					return false;
 
-                struct sockaddr *sa = result->ai_addr;
-                socklen_t maxlen = sizeof(ip);
+				struct sockaddr *sa = result->ai_addr;
+				socklen_t maxlen = sizeof(ip);
 
-                if (sa->sa_family == AF_INET) {
-                    char *tmp = (char *)ip;
-                    if (inet_ntop(AF_INET, (void *)&(((struct sockaddr_in *) sa)->sin_addr), tmp, maxlen) == NULL)
-                        return false;
+				if (sa->sa_family == AF_INET) {
+					char *tmp = (char *)ip;
+					if (inet_ntop(AF_INET, (void *)&(((struct sockaddr_in *) sa)->sin_addr), tmp, maxlen) == NULL)
+						return false;
 
-                    svraddr_4.sin_family = AF_INET;
-                    svraddr_4.sin_addr.s_addr = inet_addr(ip);
-                    svraddr_4.sin_port = htons(port);
-                    svraddr_len = sizeof(svraddr_4);
-                    svraddr = &svraddr_4;
-                }
-                else if (sa->sa_family == AF_INET6) {
-                    if (inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) sa)->sin6_addr), ip, maxlen) != 0)
-                        return false;
+					svraddr_4.sin_family = AF_INET;
+					svraddr_4.sin_addr.s_addr = inet_addr(ip);
+					svraddr_4.sin_port = htons(port);
+					svraddr_len = sizeof(svraddr_4);
+					svraddr = &svraddr_4;
+				}
+				else if (sa->sa_family == AF_INET6) {
+					if (inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) sa)->sin6_addr), ip, maxlen) != 0)
+						return false;
 
-                    memset(&svraddr_6, 0, sizeof(svraddr_6));
-                    svraddr_6.sin6_family = AF_INET6;
-                    svraddr_6.sin6_port = htons(port);
+					memset(&svraddr_6, 0, sizeof(svraddr_6));
+					svraddr_6.sin6_family = AF_INET6;
+					svraddr_6.sin6_port = htons(port);
 
-                    if (inet_pton(AF_INET6, ip, &svraddr_6.sin6_addr) < 0)
-                        return false;
+					if (inet_pton(AF_INET6, ip, &svraddr_6.sin6_addr) < 0)
+						return false;
 
-                    svraddr_len = sizeof(svraddr_6);
-                    svraddr = &svraddr_6;
-                }
+					svraddr_len = sizeof(svraddr_6);
+					svraddr = &svraddr_6;
+				}
 
-                freeaddrinfo(result);
+				freeaddrinfo(result);
 
-                set_noblock(fd, true);
+				set_noblock(fd, true);
 
-                bool ret = false;
-                if (::connect(fd, (struct sockaddr*)svraddr, svraddr_len) != 0)
-                {
-                    int32 err = get_error();
+				bool ret = false;
+				if (::connect(fd, (struct sockaddr*)svraddr, svraddr_len) != 0)
+				{
+					int32 err = get_error();
 #if (defined SHINE_OS_WINDOWS)
-                    if (err != WSAEINPROGRESS && err != WSAEWOULDBLOCK) {
-                        ret = false;
-                    }
+					if (err != WSAEINPROGRESS && err != WSAEWOULDBLOCK) {
+						ret = false;
+					}
 #else
-                    if (err != EINPROGRESS && err != EWOULDBLOCK) {
-                        ret = false;
-                    }
+					if (err != EINPROGRESS && err != EWOULDBLOCK) {
+						ret = false;
+					}
 #endif
-                    else if (timeout > 0)
-                    {
-                        struct timeval tv;
-                        tv.tv_sec = timeout / 1000;
-                        tv.tv_usec = timeout % 1000;
-                        fd_set wset, rset;
-                        FD_ZERO(&wset);
-                        FD_ZERO(&rset);
-                        FD_SET(fd, &wset);
-                        FD_SET(fd, &rset);
+					else if (timeout > 0)
+					{
+						struct timeval tv;
+						tv.tv_sec = timeout / 1000;
+						tv.tv_usec = timeout % 1000;
+						fd_set wset, rset;
+						FD_ZERO(&wset);
+						FD_ZERO(&rset);
+						FD_SET(fd, &wset);
+						FD_SET(fd, &rset);
 
-                        if (::select((int)fd + 1, &rset, &wset, NULL, &tv) == 1)
-                            ret = FD_ISSET(fd, &wset) == 1 ? true : false;
-                    }
-                }
-                else
-                {
-                    ret = true;
-                }
+						if (::select((int)fd + 1, &rset, &wset, NULL, &tv) == 1)
+							ret = FD_ISSET(fd, &wset) == 1 ? true : false;
+					}
+				}
+				else
+				{
+					ret = true;
+				}
 
-                set_noblock(fd, false);
-                return ret;
-            }
+				set_noblock(fd, false);
+				return ret;
+			}
+
+			/**
+			*@brief 域名DNS
+			*@param domain 域名/IP地址
+			*@return 地址列表<IP,V6>
+			*@warning
+			*@note
+			*/
+			static std::vector<std::pair<string, bool>> dns(const string &domain)
+			{
+				std::vector<std::pair<string, bool>> ret;
+				char ip[128];
+				SHINE_SNPRINTF(ip, sizeof(ip) - 1, "%s", domain.c_str());
+
+				struct addrinfo *result;
+				struct addrinfo *head;
+				if (getaddrinfo(ip, NULL, NULL, &result) != 0)
+					return std::move(ret);
+
+				socklen_t maxlen = sizeof(ip);
+
+				head = result;
+				while (head)
+				{
+					struct sockaddr *sa = result->ai_addr;
+					if (sa->sa_family == AF_INET) {
+						char *tmp = (char *)ip;
+						if (inet_ntop(AF_INET, (void *)&(((struct sockaddr_in *) sa)->sin_addr), ip, maxlen) != NULL)
+						{
+							ret.emplace_back(std::make_pair(ip, false));
+						}
+					}
+					else if (sa->sa_family == AF_INET6) {
+						if (inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) sa)->sin6_addr), ip, maxlen) != NULL)
+						{
+							ret.emplace_back(std::make_pair(ip, true));
+						}
+					}
+
+					head = head->ai_next;
+				}
+
+				freeaddrinfo(result);
+
+				return std::move(ret);
+			}
 
             /** 
              *@brief 创建一对相互连接的套接字

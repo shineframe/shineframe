@@ -1,21 +1,4 @@
- /**
- *****************************************************************************
- *
- *@file epoll.hpp
- *
- *@brief epoll·â×°
- *
- *@todo 
- * 
- *@note shineframe¿ª·¢¿ò¼Ü https://github.com/shineframe/shineframe
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/15 
- *****************************************************************************
- */
+
 #pragma once
 
 #include <iostream>
@@ -33,9 +16,13 @@
 
 using namespace std;
 
-void shine_handle_pipe(int sig)
-{
-}
+#ifndef SHINE_HANDLE_PIPE
+#define SHINE_HANDLE_PIPE
+//void shine_handle_pipe(int sig)
+// {
+// }
+
+#endif
 
 namespace shine
 {
@@ -88,10 +75,10 @@ namespace shine
             }
 
             /**
-            *@brief Òì²½·¢ËÍÊý¾Ý
-            *@param data Êý¾ÝÖ¸Õë
-            *@param len Êý¾Ý³¤¶È
-            *@param flush Á¢¼´·¢ËÍ
+            *@brief ï¿½ì²½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            *@param data ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+            *@param len ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½
+            *@param flush ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             *@return void
             *@warning
             *@note
@@ -106,10 +93,10 @@ namespace shine
             }
 
             /**
-            *@brief Òì²½·¢ËÍÊý¾Ý
-            *@param iov Êý¾Ý¿éÖ¸Õë
-            *@param count Êý¾Ý¿é¸öÊý
-            *@param flush Á¢¼´·¢ËÍ
+            *@brief ï¿½ì²½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            *@param iov ï¿½ï¿½ï¿½Ý¿ï¿½Ö¸ï¿½ï¿½
+            *@param count ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½
+            *@param flush ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             *@return void
             *@warning
             *@note
@@ -132,9 +119,9 @@ namespace shine
 
             void do_recv(){
                 context &ctx = get_recv_context();
-                size_type len = ::recv(get_socket_fd(), (void*)ctx.get_buf().data(), ctx.get_buf().size(), 0);
+                int len = ::recv(get_socket_fd(), (void*)ctx.get_buf().data(), ctx.get_buf().size(), 0);
 
-                while (len == ctx.get_buf().size())
+                while (len == (int)ctx.get_buf().size())
                 {
                     if (!get_recv_callback()(ctx.get_buf().data(), len, this)){
                         close();
@@ -146,7 +133,7 @@ namespace shine
 
                 if (len > 0)
                 {
-                    if (!get_recv_callback()(ctx.get_buf().data(), len, this)){
+                    if (!get_recv_callback()(ctx.get_buf().data(), (shine::size_t)len, this)){
                         close();
                         return;
                     }
@@ -245,7 +232,7 @@ namespace shine
                     return;
 
                 get_timer_manager()->cancel_timer(id);
-                id = get_timer_manager()->set_timer(timeout * 1000, [this, &id, &cb]()->bool{
+                id = get_timer_manager()->set_timer(timeout, [this, &id, &cb]()->bool{
                     if (!cb(this))
                     {
                         close();
@@ -298,6 +285,10 @@ namespace shine
 
                 set_monitor_events(events);
             }
+
+			void dump_error(const char* title) {
+				std::cout << title << " fd:" << get_socket_fd() << " remote:" << get_remote_addr().get_address_string() << " local:" << get_local_addr().get_address_string() << " error:" << socket::get_error() << " " << socket::get_error_str(socket::get_error()) << std::endl;
+			}
 
             SHINE_GEN_MEMBER_GETSET(uint32, recv_timeout, =0);
             SHINE_GEN_MEMBER_GETSET(uint32, send_timeout, = 0);
@@ -365,8 +356,11 @@ namespace shine
                     if (get_socket_fd() == invalid_socket)
                     {
                         get_timer_manager()->set_timer(get_reconnect_delay(), [this]()->bool{
-                            if (!this->async_connect())
-                                std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
+							if (!this->async_connect()){
+                                dump_error("async_connect error.");
+                                return true;
+							}
+
                             return false;
                         });
                     }
@@ -384,7 +378,7 @@ namespace shine
                 if (get_socket_fd() == invalid_socket)
                     return false;
 
-                if (!socket::bind(get_socket_fd(), get_local_addr().get_address_string()))
+                if (!socket::bind(get_socket_fd(), get_bind_addr().get_address_string()))
                     return false;
 
                 if (socket::connect(get_socket_fd(), get_remote_addr().get_address_string(), 0))
@@ -412,7 +406,7 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(uint32, reconnect_delay, = 5000);
             SHINE_GEN_MEMBER_GETREG(connect_callback_t, connect_callback, = nullptr);
             SHINE_GEN_MEMBER_GETSET(uint32, connect_timer_id, = invalid_timer_id);
-
+            SHINE_GEN_MEMBER_GETSET(address_info_t, bind_addr);
         protected:
 
         };
@@ -508,7 +502,7 @@ namespace shine
 
                 struct sigaction action;
                 action.sa_flags = 0;
-                action.sa_handler = shine_handle_pipe;
+				action.sa_handler = [](int sig) {};
 
                 sigaction(SIGPIPE, &action, NULL);
 
@@ -571,13 +565,13 @@ namespace shine
 
 
             /**
-            *@brief ÐÂ½¨Ò»¸ö¿Í»§¶ËÁ¬½Ó
-            *@param name Ãû³Æ
-            *@param conn_addr ¶Ô¶ËµØÖ·host:port / ip:port
-            *@param cb Á¬½Ó»Øµ÷
-            *@param bind_addr ±¾¶ËµØÖ·host:port / ip:port
-            *@param reconnect ÊÇ·ñ×Ô¶¯ÖØÁ¬
-            *@param reconnect_delay ×Ô¶¯ÖØÁ¬¼ä¸ô
+            *@brief ï¿½Â½ï¿½Ò»ï¿½ï¿½ï¿½Í»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            *@param name ï¿½ï¿½ï¿½ï¿½
+            *@param conn_addr ï¿½Ô¶Ëµï¿½Ö·host:port / ip:port
+            *@param cb ï¿½ï¿½ï¿½Ó»Øµï¿½
+            *@param bind_addr ï¿½ï¿½ï¿½Ëµï¿½Ö·host:port / ip:port
+            *@param reconnect ï¿½Ç·ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½
+            *@param reconnect_delay ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             *@return bool
             *@warning
             *@note
@@ -599,14 +593,14 @@ namespace shine
                 conn->set_timer_manager(&_timer);
                 conn->set_kernel_fd(get_epoll_fd());
                 conn->set_remote_addr(conn_info);
-                conn->set_local_addr(bind_info);
+                conn->set_bind_addr(bind_info);
                 conn->set_name(name);
                 conn->set_reconnect(reconnect);
                 conn->set_reconnect_delay(reconnect_delay);
                 conn->register_connect_callback(cb);
 
                 if (!conn->async_connect()) {
-                    std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
+					conn->dump_error("async_connect error.");
                     conn->close();
                     return false;
                 }
@@ -615,10 +609,10 @@ namespace shine
             }
 
             /**
-            *@brief ÐÂÔöÒ»¸ö·þÎñ¶ËÕìÌý¶ÔÏó
-            *@param name Á¬½ÓÃû³Æ
-            *@param addr ÕìÌýµØÖ·ip:port
-            *@param cb ÐÂÁ¬½Ó»Øµ÷¶ÔÏó
+            *@brief ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            *@param name ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            *@param addr ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ip:port
+            *@param cb ï¿½ï¿½ï¿½ï¿½ï¿½Ó»Øµï¿½ï¿½ï¿½ï¿½ï¿½
             *@return bool
             *@warning
             *@note
@@ -647,10 +641,10 @@ namespace shine
             }
 
             /**
-            *@brief Ê¹ÓÃÒÑÓÐµÄsocket´´½¨Ò»¸öÁ¬½Ó¶ÔÏó
-            *@param name Á¬½ÓÃû³Æ
-            *@param fd socketÌ×½Ó×Ö
-            *@param cb Á¬½Ó»Øµ÷¶ÔÏó
+            *@brief Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½socketï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½Ó¶ï¿½ï¿½ï¿½
+            *@param name ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            *@param fd socketï¿½×½ï¿½ï¿½ï¿½
+            *@param cb ï¿½ï¿½ï¿½Ó»Øµï¿½ï¿½ï¿½ï¿½ï¿½
             *@return bool
             *@warning
             *@note

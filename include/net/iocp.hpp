@@ -1,21 +1,4 @@
- /**
- *****************************************************************************
- *
- *@file iocp.hpp
- *
- *@brief iocp·â×°
- *
- *@todo 
- * 
- *@note shineframe¿ª·¢¿ò¼Ü https://github.com/shineframe/shineframe
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/15 
- *****************************************************************************
- */
+
 #pragma once
 
 #include <iostream>
@@ -157,7 +140,7 @@ namespace shine
                 {
                     if (WSAGetLastError() != WSA_IO_PENDING)
                     {
-                        std::cout << socket::get_error() << endl;
+						dump_error("WSASend error.");
                     }
                 }
 
@@ -208,6 +191,10 @@ namespace shine
             void stop_send_timeout_timer(){
                 stop_timer(get_send_timeout_timer_id());
             }
+
+			void dump_error(const char* title) {
+				std::cout << title << " fd:" << get_socket_fd() << " remote:" << get_remote_addr().get_address_string() << " local:" << get_local_addr().get_address_string() << " error:" << socket::get_error() << " " << socket::get_error_str(socket::get_error()) << std::endl;
+			}
 
             SHINE_GEN_MEMBER_GETSET(uint32, recv_timeout, = 0);
             SHINE_GEN_MEMBER_GETSET(uint32, send_timeout, = 0);
@@ -275,7 +262,7 @@ namespace shine
                     {
                         get_timer_manager()->set_timer(get_reconnect_delay(), [this]()->bool{
                             if (!this->async_connect())
-                                std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
+                                dump_error("async_connect error.");
                             return false;
                         });
                     }
@@ -304,7 +291,7 @@ namespace shine
                     , sizeof(func), &ret, 0, 0) == SOCKET_ERROR)
                     return false;
 
-                if (!socket::bind(get_socket_fd(), get_local_addr().get_address_string()))
+                if (!socket::bind(get_socket_fd(), get_bind_addr().get_address_string()))
                     return false;
 
                 struct sockaddr_in address;
@@ -336,7 +323,7 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(bool, reconnect, = true);
             SHINE_GEN_MEMBER_GETSET(uint32, reconnect_delay, = 5000);
             SHINE_GEN_MEMBER_GETSET(uint32, reconnect_timer_id, = invalid_timer_id);
-
+			SHINE_GEN_MEMBER_GETSET(address_info_t, bind_addr);
         protected:
 
         };
@@ -407,7 +394,7 @@ namespace shine
                 {
                     if (WSAGetLastError() != ERROR_IO_PENDING)
                     {
-                        std::cout << socket::get_error() << std::endl;
+						dump_error("acceptex error");
                         return false;
                     }
                     else
@@ -581,7 +568,6 @@ namespace shine
             void handle_failed(context *ctx, DWORD len){
                 if (ctx == nullptr)
                     return;
-
                  if (ctx->get_status() == context::e_connect)
                 {
                      connector *&obj = (connector *&)ctx->get_parent();
@@ -590,9 +576,11 @@ namespace shine
                      if (obj->get_reconnect())
                      {
                          obj->get_timer_manager()->set_timer(obj->get_reconnect_delay(), [&obj]()->bool{
-                             if (!obj->async_connect())
-                                 std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
-                             return false;
+							 if (!obj->async_connect()) {
+								 obj->dump_error("async_connect error.");
+								 return true;
+							 }
+							 return false;
                          });
                      }
                      else
@@ -645,9 +633,10 @@ namespace shine
                     BOOL rc = GetQueuedCompletionStatus(_iocp, &len, (PULONG_PTR)&key, (LPOVERLAPPED*)&ctx,
                         timeout > 0 ? timeout : 1000);
                     
+					int error = socket::get_error();
                     if (rc == FALSE)
                     {
-                        if (GetLastError() == WAIT_TIMEOUT)
+                        if (error == WAIT_TIMEOUT)
                             continue;
                     }
 
@@ -690,6 +679,12 @@ namespace shine
                 if (!socket::parse_addr(conn_addr, conn_info))
                     return false;
 
+				auto ip_arr = socket::dns(conn_info.get_ip());
+				if (ip_arr.size() > 0)
+				{
+					conn_info.set_ip(ip_arr[0].first);
+				}
+
                 address_info_t bind_info;
                 if (!socket::parse_addr(bind_addr, bind_info))
                     return false;
@@ -698,14 +693,14 @@ namespace shine
                 conn->set_timer_manager(&_timer);
                 conn->set_kernel_fd(_iocp);
                 conn->set_remote_addr(conn_info);
-                conn->set_local_addr(bind_info);
+                conn->set_bind_addr(bind_info);
                 conn->set_name(name);
                 conn->set_reconnect(reconnect);
                 conn->set_reconnect_delay(reconnect_delay);
                 conn->register_connect_callback(cb);
 
                 if (!conn->async_connect()) {
-                    std::cout << "connect:" << socket::get_error_str(socket::get_error()) << std::endl;
+					conn->dump_error("async_connect error.");
                     conn->close();
                     return false;
                 }
