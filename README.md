@@ -669,7 +669,7 @@ echo服务端代码示例：
 	            websocket::server_peer *conn_handle = new websocket::server_peer;
 	            conn_handle->set_recv_timeout(0);
 	
-	            conn_handle->register_websocket_recv_callback([](frame_type type, const int8 *data, shine::size_t len, net::connection *conn)->bool{
+	            conn_handle->register_recv_callback([](frame_type type, const int8 *data, shine::size_t len, net::connection *conn)->bool{
 	                
 	                if (type == websocket::e_text)
 	                {
@@ -685,7 +685,7 @@ echo服务端代码示例：
 	                return true;            
 	            });
 	
-	            conn_handle->register_websocket_close_callback([](net::connection *conn){
+	            conn_handle->register_close_callback([](net::connection *conn){
 	                std::cout << "websocket_close_callback:" << conn << std::endl;
 	            });
 	
