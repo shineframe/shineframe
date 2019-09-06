@@ -181,8 +181,10 @@ namespace shine
              *@note 
             */
             static bool bind(socket_t fd, const string &addr/*ip:port*/){
+#ifdef SHINE_OS_LINUX
                 if (addr == "0.0.0.0:0")
                     return true;
+#endif
                 address_info_t info;
                 if (!parse_addr(addr, info))
                     return false;
