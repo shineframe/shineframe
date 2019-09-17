@@ -11,6 +11,7 @@
 #include <functional>
 #include "../common/define.hpp"
 #include "../util/string.hpp"
+#include "../net/proactor_engine.hpp"
 
 #if (defined SHINE_OS_WINDOWS)
 #else
@@ -257,7 +258,7 @@ namespace shine
         class response : public header, public body
         {
         public:
-			typedef net::connection* connection_t;
+			typedef shine::net::connection* connection_t;
             size_t decode_header(const int8 *data_, size_t len)
             {
                 int8 *data = (int8*)data_;

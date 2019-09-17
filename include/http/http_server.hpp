@@ -102,7 +102,7 @@ namespace shine
                         int8 *header_end = strstr((int8*)real_data, "\r\n\r\n");
                         if (header_end == NULL)
                         {
-                            if (get_buf().size() - get_buf_pos() >= 100)
+                            if (get_buf().size() - get_buf_pos() >= 1024)
                                 return false;
 
                             return true;

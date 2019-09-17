@@ -17,17 +17,23 @@
  *****************************************************************************
  */
 #pragma once
+#include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <stdarg.h>
 #include <vector>
 #include <algorithm>
-#include <locale>
 #include "../common/define.hpp"
 #include "tool.hpp"
 #include "md5.hpp"
 
-const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#ifdef SHINE_OS_WINDOWS
+#include <windows.h>
+#elif defined SHINE_OS_LINUX
+#include <iconv.h>
+#endif
+
+static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 "abcdefghijklmnopqrstuvwxyz"
 "0123456789+/";
 
@@ -502,6 +508,85 @@ namespace shine
             return find(text) != std::string::npos;
         }
 
+#ifdef SHINE_OS_WINDOWS
+/*
+		static string gbk_2_utf8(const string &gbk_str) {
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt_utf8;//UTF-8<->Unicode转换器
+			std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>>cvt_ansi(new std::codecvt<wchar_t, char, std::mbstate_t>("CHS"));//GBK<->Unicode转换器
+			std::wstring unicode_str = cvt_ansi.from_bytes(gbk_str);
+			return cvt_utf8.to_bytes(unicode_str);
+		}
+
+		static string utf8_2_gbk(const string &utf8_str) {
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt_utf8;//UTF-8<->Unicode转换器
+			std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>>cvt_ansi(new std::codecvt<wchar_t, char, std::mbstate_t>("CHS"));//GBK<->Unicode转换器
+			std::wstring unicode_str = cvt_utf8.from_bytes(utf8_str);//UTF-8转换为Unicode
+			return cvt_ansi.to_bytes(unicode_str);//Unicode转换为GBK
+		}*/
+
+		static void gbk_to_utf8(const string& gbk, string &utf8)
+		{
+			WCHAR * str1;
+			int n = MultiByteToWideChar(CP_ACP, 0, gbk.c_str(), -1, NULL, 0);
+			str1 = new WCHAR[n];
+			MultiByteToWideChar(CP_ACP, 0, gbk.c_str(), -1, str1, n);
+			n = WideCharToMultiByte(CP_UTF8, 0, str1, -1, NULL, 0, NULL, NULL);
+			char * str2 = new char[n];
+			WideCharToMultiByte(CP_UTF8, 0, str1, -1, str2, n, NULL, NULL);
+			utf8 = str2;
+			delete[]str1;
+			str1 = NULL;
+			delete[]str2;
+			str2 = NULL;
+		}
+
+		static void utf8_to_gbk(const string& utf8, string &gbk)
+		{
+			int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, NULL, 0);
+			unsigned short * wsz_gbk = new unsigned short[len + 1];
+			memset(wsz_gbk, 0, len * 2 + 2);
+			MultiByteToWideChar(CP_UTF8, 0, (LPCTSTR)utf8.c_str(), -1, (LPWSTR)wsz_gbk, len);
+
+			len = WideCharToMultiByte(CP_ACP, 0, (LPCWCH)wsz_gbk, -1, NULL, 0, NULL, NULL);
+			char *sz_gbk = new char[len + 1];
+			memset(sz_gbk, 0, len + 1);
+			WideCharToMultiByte(CP_ACP, 0, (LPCWCH)wsz_gbk, -1, sz_gbk, len, NULL, NULL);
+
+			gbk = sz_gbk;
+			delete[]sz_gbk;
+			delete[]wsz_gbk;
+		}
+#elif defined SHINE_OS_LINUX
+		static void convert(const char* from, const char *to, const string &input, string &output) {
+			output.clear();
+			size_t input_len = input.length();
+			if (input_len == 0)
+				return;
+
+			size_t output_len = 2 * input_len + 1;
+			char *p_buf = new char[output_len];
+			memset(p_buf, 0, output_len);
+			iconv_t cd;
+			char *p_input = (char *)input.c_str();
+			char *p_out = p_buf;
+			cd = iconv_open(to, from);
+			iconv(cd, &p_input, &input_len, &p_buf, &output_len);
+			iconv_close(cd);
+			output = p_out;
+			delete []p_out;
+		}
+
+		static void gbk_to_utf8(const string& gbk, string& utf8)
+		{
+			convert("GBK", "utf8", gbk, utf8);
+		}
+
+		static void utf8_to_gbk(const string& utf8, string& gbk)
+		{
+			convert("utf8", "GBK", utf8, gbk);
+		}
+
+#endif
         static string print_hex_string(const string &str){
             static const uint8 buf[] = "0123456789ABCDEF";
             string ret;
