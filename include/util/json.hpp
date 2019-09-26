@@ -32,7 +32,7 @@
 #define JSON_ENCODE(...) JSON_GEN_ENCODE_FUNC(GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
 #define JSON_DECODE(...) JSON_GEN_DECODE_FUNC(GET_ARG_COUNT(__VA_ARGS__), __VA_ARGS__)
 
-#define SHINE_JSON_MODEL(TYPE, ...) shine::string json_encode(){\
+#define SHINE_JSON_MODEL(TYPE, ...) shine::string json_encode() const{\
     shine::string ret; \
     bool empty = true; \
     JSON_ENCODE(__VA_ARGS__); \
@@ -52,7 +52,7 @@ if (!empty){ ret.insert(0, "{"); ret += "}"; }\
     JSON_DECODE(__VA_ARGS__); \
     return true; \
     }}; \
-    inline shine::string json_encode_field(TYPE &val){ return val.json_encode(); }\
+    inline shine::string json_encode_field(const TYPE &val){ return val.json_encode(); }\
     inline void json_decode_field(TYPE &val, shine::json_node_t *node){\
     val.json_decode(node);
 
@@ -671,7 +671,7 @@ if (!empty) ret += ","; \
     if (node2) ::json_decode_field(this->field, node2); \
 }
 
-inline shine::string json_encode_field(bool val) {
+inline shine::string json_encode_field(const bool val) {
 	shine::string ret = val ? "true" : "false";
 	return ret;
 }
@@ -779,7 +779,7 @@ inline void json_decode_field(shine::LDouble &val, shine::json_node_t *node) {
 
 #define JSON_ENCODE_MAP_FIELD(TYPE) \
     template<typename T1, typename T2>\
-    inline shine::string json_encode_field(TYPE<T1, T2> &val){\
+    inline shine::string json_encode_field(const TYPE<T1, T2> &val){\
 if (val.empty()) return ""; \
     shine::string ret = "{"; \
     bool empty = true; \
@@ -832,7 +832,7 @@ JSON_DECODE_MAP_FIELD(std::unordered_map);
 
 #define JSON_ENCODE_ARRAY_FIELD(TYPE) \
     template<typename T>\
-    inline shine::string json_encode_field(TYPE<T> &val){\
+    inline shine::string json_encode_field(const TYPE<T> &val){\
 if (val.empty()) return ""; \
     shine::string ret = "["; \
     bool empty = true; \

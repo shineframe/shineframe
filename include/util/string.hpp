@@ -43,7 +43,7 @@ namespace shine
     {
     public:
         string(){}
-        string(const int8* str) : std::string(str) {}
+        string(const int8* str) : std::string(str == 0 ? "" : str) {}
         string(const std::string &other) : std::string(other){}
         string(std::string &&other) : std::string(other){}
         string(const string &other) : std::string(other){}
@@ -113,47 +113,47 @@ namespace shine
         }
 
         int16 to_int16(){
-            return (int16)std::stoi(*this);
+            return (int16)::atoi(this->c_str());
         }
 
         uint16 to_uint16(){
-            return (uint16)std::stoul(*this);
+            return (uint16)::atoi(this->c_str());
         }
 
         int32 to_int32(){
-            return std::stoi(*this);
+            return ::atoi(this->c_str());
         }
 
         uint32 to_uint32(){
-            return (uint32)std::stoul(*this);
+            return (uint32)::atoi(this->c_str());
         }
 
         Long to_long(){
-            return std::stol(*this);
+            return (Long)::atol(this->c_str());
         }
 
         uLong to_ulong(){
-            return std::stoul(*this);
+            return (uLong)::atol(this->c_str());
         }
 
         int64 to_int64(){
-            return std::stoll(*this);
+            return ::atoll(this->c_str());
         }
 
         uint64 to_uint64(){
-            return (uint32)std::stoull(*this);
+            return (uint64)::atoll(this->c_str());
         }
 
         Float to_float(){
-            return std::stof(*this);
+            return (Float)::atof(this->c_str());
         }
 
         Double to_double(){
-            return std::stod(*this);
+            return ::atof(this->c_str());
         }
 
         LDouble to_long_double(){
-            return std::stold(*this);
+            return (LDouble)::atof(this->c_str());
         }
 
         string &operator=(const string &v){

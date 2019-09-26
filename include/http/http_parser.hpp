@@ -207,7 +207,7 @@ namespace shine
                     data = tmp + 2;
 
                     if (entry.get_key() == "Content-Length")
-                        get_content_length() = std::stoll(entry.get_value());
+                        get_content_length() = entry.get_value().to_uint64();
                     else
                         add_entry(std::move(entry));
                 }
@@ -305,7 +305,7 @@ namespace shine
                     data = tmp + 2;
 
                     if (entry.get_key() == "Content-Length")
-                        get_content_length() = std::stoll(entry.get_value());
+                        get_content_length() = entry.get_value().to_uint64();
                     else
                         add_entry(std::move(entry));
                 }

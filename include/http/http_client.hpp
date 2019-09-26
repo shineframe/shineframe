@@ -1,11 +1,11 @@
  /**
  *****************************************************************************
  *
- *@note shineframe¿ª·¢¿ò¼Ü https://github.com/shineframe/shineframe
+ *@note shineframeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ https://github.com/shineframe/shineframe
  *
  *@file http_client.hpp
  *
- *@brief http¿Í»§¶Ë
+ *@brief httpï¿½Í»ï¿½ï¿½ï¿½
  *
  *@todo 
  *
@@ -79,7 +79,7 @@ namespace shine
                         }
 
                         shine::size_t cost_len = get_response().decode_header(get_buf().data() + get_buf_pos(), (pos - get_buf_pos()) + 4);
-                        if (cost_len < 0)
+                        if (cost_len == -1)
                             return false;
 
                         get_buf_pos() += cost_len;

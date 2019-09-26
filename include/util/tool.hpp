@@ -29,16 +29,65 @@ using namespace std;
 
 namespace shine
 {
+	struct time_t
+	{
+		int64 timestamp;
+		int year;
+		int month;
+		int day;
+		int hour;
+		int mintue;
+		int second;
+		int milliseconds;
+		int wday;
+		int yday;
+		char str[32];
+	};
+
     class tool
     {
     public:
-        static uint64 get_timestamp()
+        static inline int64 get_timestamp()
         {
-            auto now = std::chrono::high_resolution_clock::now();
-            return std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-        }
+			std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> tp = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+			return std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
+		}
 
-        static std::string get_datetime(bool ms = false)
+		static inline shine::time_t get_time()
+		{
+			shine::time_t ret;
+			ret.timestamp = get_timestamp();
+			std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> tp(std::chrono::milliseconds(ret.timestamp + 8 * 60 * 60 * 1000));
+
+			auto tt = std::chrono::system_clock::to_time_t(tp);
+			std::tm* now = std::gmtime(&tt);
+
+			ret.year = now->tm_year + 1900;
+			ret.month = now->tm_mon + 1;
+			ret.day = now->tm_mday;
+			ret.yday = now->tm_yday;
+			ret.wday = now->tm_wday;
+			ret.hour = now->tm_hour;
+			ret.mintue = now->tm_min;
+			ret.second = now->tm_sec;
+			ret.milliseconds = ret.timestamp % 1000;
+
+			sprintf(ret.str, "%04d-%02d-%02d %02d:%02d:%02d:%03d", ret.year, ret.month, ret.day, ret.hour
+			, ret.mintue, ret.second, ret.milliseconds);
+			return std::move(ret);
+		}
+
+		static std::tm* get_time(int64 timestamp)
+		{
+			int64 milli = timestamp + (int64)8 * 60 * 60 * 1000;//此处转化为东八区北京时间，如果是其它时区需要按需求修改
+			auto mTime = std::chrono::milliseconds(milli);
+			auto tp = std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds>(mTime);
+			auto tt = std::chrono::system_clock::to_time_t(tp);
+			std::tm* now = std::gmtime(&tt);
+			return now;
+		}
+
+        static inline std::string get_datetime(bool ms = false)
         {
             struct timeval	tv;
             struct tm	stime;
