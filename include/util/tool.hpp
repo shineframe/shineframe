@@ -50,7 +50,9 @@ namespace shine
         static inline int64 get_timestamp()
         {
 			std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> tp = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
-			return std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
+			auto tmp = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch());
+			std::time_t timestamp = tmp.count();
+			return timestamp;
 		}
 
 		static inline shine::time_t get_time()

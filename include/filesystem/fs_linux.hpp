@@ -51,7 +51,7 @@ namespace shine
                 return std::move(result);
             }
 
-            bool mkdir(const string &path, bool p = true, int mode = 0777){
+			inline bool mkdir(const string &path, bool p = true, int mode = 0777){
                 if (!p)
                     return !::mkdir(path.c_str(), mode);
                 std::size_t offset = 0;
@@ -74,7 +74,7 @@ namespace shine
                 } while (true);
             }
 
-            bool rmdir(const string &path){
+			inline bool rmdir(const string &path){
                 return !::rmdir(path.c_str());
             }
 
@@ -154,7 +154,7 @@ namespace shine
                 e_unknown,
             };
 
-            type file_type(const string &path){
+			inline type file_type(const string &path){
                 struct stat st;
                 if (stat(path.c_str(), &st) != 0)
                     return e_unknown;

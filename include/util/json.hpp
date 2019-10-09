@@ -823,12 +823,67 @@ if (!empty)\
     }); \
     }
 
-
 JSON_ENCODE_MAP_FIELD(std::map);
 JSON_DECODE_MAP_FIELD(std::map);
 
 JSON_ENCODE_MAP_FIELD(std::unordered_map);
 JSON_DECODE_MAP_FIELD(std::unordered_map);
+
+#define JSON_ENCODE_MULTIMAP_FIELD(TYPE) \
+    template<typename T1, typename T2>\
+    inline shine::string json_encode_field(const TYPE<T1, T2> &val){\
+if (val.empty()) return ""; \
+    shine::string ret = "["; \
+    bool empty = true; \
+for (auto &iter : val)\
+{\
+    shine::string k;\
+    if (std::is_same<std::string, T1>::value) {k = json_encode_field(iter.first);} \
+    else if (std::is_same<shine::string, T1>::value) { k = json_encode_field(iter.first); }\
+    else { k = "\"" + json_encode_field(iter.first) + "\""; } \
+    shine::string v = json_encode_field(iter.second); \
+	if (!v.empty())\
+	{\
+		if (!empty) \
+			ret += ","; \
+		ret += "{";\
+		ret += k; \
+		ret += ":"; \
+		ret += v; \
+		ret += "}";\
+		empty = false; \
+	}\
+}\
+    \
+    ret += "]"; \
+    \
+    return ret; \
+    }
+
+
+#define JSON_DECODE_MULTIMAP_FIELD(TYPE) \
+    template<typename T1, typename T2>\
+    inline void json_decode_field(TYPE<T1, T2> &val, shine::json_node_t *node){\
+	val.clear();\
+    node->foreach_array_childs([&val](const shine::size_type, const shine::json_node_t &value){\
+		    value.foreach_kv_childs([&val](const shine::string &key, const shine::json_node_t &value){\
+			shine::json_node_t tmp;\
+			tmp.set_string(key);\
+			T1 k;\
+			T2 v;\
+			json_decode_field(k, (shine::json_node_t *)&tmp); \
+			json_decode_field(v, (shine::json_node_t *)&value); \
+			val.emplace(std::move(k), std::move(v));\
+		}); \
+    }); \
+    }
+
+
+JSON_ENCODE_MULTIMAP_FIELD(std::multimap);
+JSON_DECODE_MULTIMAP_FIELD(std::multimap);
+
+JSON_ENCODE_MULTIMAP_FIELD(std::unordered_multimap);
+JSON_DECODE_MULTIMAP_FIELD(std::unordered_multimap);
 
 #define JSON_ENCODE_ARRAY_FIELD(TYPE) \
     template<typename T>\
@@ -906,4 +961,10 @@ JSON_DECODE_SET_FIELD(std::set);
 
 JSON_ENCODE_SET_FIELD(std::unordered_set);
 JSON_DECODE_SET_FIELD(std::unordered_set);
+
+JSON_ENCODE_SET_FIELD(std::multiset);
+JSON_DECODE_SET_FIELD(std::multiset);
+
+JSON_ENCODE_SET_FIELD(std::unordered_multiset);
+JSON_DECODE_SET_FIELD(std::unordered_multiset);
 
