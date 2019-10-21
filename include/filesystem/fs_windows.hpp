@@ -239,15 +239,15 @@ namespace shine
                         ;
                     else
                     {
-                        ret.emplace_back(find_data.cFileName);
-                        ret.back().push_back('/');
+                        ret.emplace_back(path +find_data.cFileName);
+                        //ret.back().push_back('/');
                     }
                 }
                 else if (find_data.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN |
                     FILE_ATTRIBUTE_NORMAL |
                     FILE_ATTRIBUTE_ARCHIVE))
                 {
-                    ret.emplace_back(find_data.cFileName);
+                    ret.emplace_back(path + find_data.cFileName);
                 }
                 if (!FindNextFile(handle, &find_data))
                     break;

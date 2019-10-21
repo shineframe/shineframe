@@ -214,11 +214,11 @@ namespace shine
                     if (ent->d_type & DT_DIR)
                     {
                         if (!(name == "." || name == ".."))
-                            files.emplace_back(std::move(name + "/"));
+                            files.emplace_back(path + name);
                     }
                     else if (ent->d_type & DT_REG)
                     {
-                        files.emplace_back(std::move(name));
+                        files.emplace_back(path + name);
                     }
                 }
                 return std::move(files);

@@ -17,6 +17,7 @@
  *****************************************************************************
  */
 #pragma once
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -26,12 +27,6 @@
 #include "../common/define.hpp"
 #include "tool.hpp"
 #include "md5.hpp"
-
-#ifdef SHINE_OS_WINDOWS
-#include <windows.h>
-#elif defined SHINE_OS_LINUX
-#include <iconv.h>
-#endif
 
 static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 "abcdefghijklmnopqrstuvwxyz"
@@ -98,7 +93,7 @@ namespace shine
         }
 
         template<class T>
-        std::string number_to_string(const int8 *fmt, const T &num){
+        std::string number_to_string(const int8 *fmt, const T &num) const {
             int8 buf[64];
             size_t len = SHINE_SNPRINTF(buf, sizeof(buf), fmt, num);
             char *pos = strstr(buf, ".");
@@ -109,52 +104,72 @@ namespace shine
                     buf[len] = '\0';
             }
 
-            return std::move(std::string(buf));
+            return buf;
         }
 
         int16 to_int16(){
             return (int16)::atoi(this->c_str());
         }
 
-        uint16 to_uint16(){
+        uint16 to_uint16() const {
             return (uint16)::atoi(this->c_str());
         }
 
-        int32 to_int32(){
+        int32 to_int32() const{
             return ::atoi(this->c_str());
         }
 
-        uint32 to_uint32(){
+        uint32 to_uint32() const {
             return (uint32)::atoi(this->c_str());
         }
 
-        Long to_long(){
+        Long to_long() const {
             return (Long)::atol(this->c_str());
         }
 
-        uLong to_ulong(){
+        uLong to_ulong() const {
             return (uLong)::atol(this->c_str());
         }
 
-        int64 to_int64(){
+        int64 to_int64() const {
             return ::atoll(this->c_str());
         }
 
-        uint64 to_uint64(){
+        uint64 to_uint64() const {
             return (uint64)::atoll(this->c_str());
         }
 
-        Float to_float(){
+        Float to_float() const {
             return (Float)::atof(this->c_str());
         }
 
-        Double to_double(){
+        Double to_double() const {
             return ::atof(this->c_str());
         }
 
-        LDouble to_long_double(){
+        LDouble to_long_double() const {
             return (LDouble)::atof(this->c_str());
         }
+
+		operator const char*() const {
+			return c_str();
+		}
+
+		operator char*() const {
+			return (char*)data();
+		}
+
+		operator void*() const {
+			return (void*)data();
+		}
+
+		char & operator [] (int32 pos) {
+			return at(pos);
+		}
+
+		const char& operator [] (int32 pos) const {
+			return at(pos);
+		}
 
         string &operator=(const string &v){
             std::string::assign(v.data(), v.size());
@@ -504,7 +519,7 @@ namespace shine
             return trim_left().trim_right();
         }
 
-        bool contains(const char* text){
+        bool contains(const char* text) const {
             return find(text) != std::string::npos;
         }
 
