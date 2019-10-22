@@ -25,7 +25,7 @@
 
 #endif
 
-using namespace std;
+// using namespace std;
 
 namespace shine
 {
@@ -162,7 +162,7 @@ namespace shine
 
             for (;;)
             {
-                val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
+                val |= (shine::size_t)(p[i] & 0x7F) << (7 * i);
                 if (p[i++] & 0x80) {
                     if (i >= len)
                         return 0;
