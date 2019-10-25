@@ -756,6 +756,9 @@ namespace shine
 			}
 		}
 
+		inline string format() {
+			return format(encode());
+		}
 
 		/**
 		*@brief 将json对象编码成json字符串

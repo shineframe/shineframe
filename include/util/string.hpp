@@ -24,6 +24,9 @@
 #include <stdarg.h>
 #include <vector>
 #include <algorithm>
+#ifdef SHINE_OS_LINUX
+#include <iconv.h>
+#endif
 #include "../common/define.hpp"
 #include "tool.hpp"
 #include "md5.hpp"
