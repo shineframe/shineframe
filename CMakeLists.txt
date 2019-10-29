@@ -40,6 +40,8 @@ ADD_EXECUTABLE(proactor_echo_client examples/proactor_echo_client.cpp)
 
 ADD_EXECUTABLE(mysql examples/mysql.cpp)
 
+ADD_EXECUTABLE(sqlite examples/sqlite.cpp include/sqlite/sqlite.hpp include/sqlite/sqlite/sqlite3.c)
+
 ADD_EXECUTABLE(websocket_echo_server examples/websocket_echo_server.cpp)
 
 ADD_EXECUTABLE(zeromq examples/zeromq.cpp)
