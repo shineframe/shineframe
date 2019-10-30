@@ -74,6 +74,14 @@ namespace shine
 				close();
 			}
 
+			static void dump_error(sqlite3* handle) {
+				std::cout << sqlite3_errmsg(handle) << sqlite3_errcode(handle) << std::endl;
+			}
+
+			void dump_error() {
+				dump_error(handle);
+			}
+
 			bool execute(const string &sql, sqlite_result *result = NULL) {
 				if (!handle)
 					return false;
@@ -84,7 +92,7 @@ namespace shine
 				char *msg = 0;
 				int rc = sqlite3_exec(handle, sql, sqlite_result::parse, (void*)result, &msg);
 				if (rc != SQLITE_OK) {
-					std::cout <<"SQL error:" << msg << std::endl;
+					std::cout <<"SQL error:" << sql << "  " << msg << std::endl;
 					sqlite3_free(msg);
 					return false;
 				}
@@ -125,8 +133,10 @@ namespace shine
 				if (handle)
 					close();
 
-				if (sqlite3_open_v2(filename, &handle, flags, zVfs) != SQLITE_OK)
-					return false;//KOMPEX_EXCEPT(sqlite3_errmsg(handle), sqlite3_errcode(handle));
+				if (sqlite3_open_v2(filename, &handle, flags, zVfs) != SQLITE_OK) {
+					dump_error();
+					return false;
+				}
 
 				sqlite3_extended_result_codes(handle, true);
 
@@ -147,8 +157,10 @@ namespace shine
 					close();
 
 				// standard usage: SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
-				if (sqlite3_open16(filename, &handle) != SQLITE_OK)
-					return false;//KOMPEX_EXCEPT(sqlite3_errmsg(handle), sqlite3_errcode(handle));
+				if (sqlite3_open16(filename, &handle) != SQLITE_OK) {
+					dump_error();
+					return false;
+				}
 
 				sqlite3_extended_result_codes(handle, true);
 
@@ -162,14 +174,16 @@ namespace shine
 				// detach database if the database was moved into memory
 				if (memory)
 				{
-					if (sqlite3_exec(handle, "DETACH DATABASE origin", 0, 0, 0) != SQLITE_OK)
-						;//KOMPEX_EXCEPT(sqlite3_errmsg(handle), sqlite3_errcode(handle));
+					if (sqlite3_exec(handle, "DETACH DATABASE origin", 0, 0, 0) != SQLITE_OK) {
+						dump_error();
+						return;
+					}
 				}
 
 				// close the database
-				if (handle && sqlite3_close(handle) != SQLITE_OK)
-				{
-					;//KOMPEX_EXCEPT(sqlite3_errmsg(handle), sqlite3_errcode(handle));
+				if (handle && sqlite3_close(handle) != SQLITE_OK) {
+					dump_error();
+					return;
 				}
 				else
 				{
@@ -274,7 +288,7 @@ namespace shine
 						if (sqlite3_exec(memoryDatabase, sql.c_str(), 0, 0, 0) != SQLITE_OK)
 						{
 							sqlite3_close(memoryDatabase);
-							;//KOMPEX_EXCEPT(sqlite3_errmsg(memoryDatabase), sqlite3_errcode(memoryDatabase));
+							dump_error(memoryDatabase);
 						}
 					}
 					else
@@ -377,20 +391,20 @@ namespace shine
 					sqlite3_exec(memoryDatabase, "DETACH DATABASE origin", 0, 0, 0);
 
 				sqlite3_close(memoryDatabase);
-				;//KOMPEX_EXCEPT(errMsg, internalSqliteErrCode);
 			}
 
 			static int ProcessDDLRow(void *db, int columnsCount, char **values, char **columns)
 			{
 				if (columnsCount != 1)
 				{
-					;//KOMPEX_EXCEPT("error occured during DDL: columnsCount != 1", -1);
 					return -1;
 				}
 
 				// execute a sql statement in values[0] in the database db.
-				if (sqlite3_exec(static_cast<sqlite3*>(db), values[0], 0, 0, 0) != SQLITE_OK)
-					;//KOMPEX_EXCEPT("error occured during DDL: sqlite3_exec (error message: " + std::string(sqlite3_errmsg(static_cast<sqlite3*>(db))) + ")", sqlite3_errcode(static_cast<sqlite3*>(db)));
+				if (sqlite3_exec(static_cast<sqlite3*>(db), values[0], 0, 0, 0) != SQLITE_OK) {
+					dump_error((sqlite3*)db);
+					return false;
+				}
 
 				return 0;
 			}
@@ -399,21 +413,22 @@ namespace shine
 			{
 				if (columnsCount != 1)
 				{
-					;//KOMPEX_EXCEPT("error occured during DML: columnsCount != 1", -1);
 					return -1;
 				}
 
 				char *stmt = sqlite3_mprintf("INSERT INTO main.%q SELECT * FROM origin.%q", values[0], values[0]);
 
-				if (sqlite3_exec(static_cast<sqlite3*>(db), stmt, 0, 0, 0) != SQLITE_OK)
-					;//KOMPEX_EXCEPT("error occured during DDL: sqlite3_exec (error message: " + std::string(sqlite3_errmsg(static_cast<sqlite3*>(db))) + ")", sqlite3_errcode(static_cast<sqlite3*>(db)));
+				if (sqlite3_exec(static_cast<sqlite3*>(db), stmt, 0, 0, 0) != SQLITE_OK) {
+					dump_error((sqlite3*)db);
+					return false;
+				}
 
 				sqlite3_free(stmt);
 
 				return 0;
 			}
 
-			void save_file(const std::string &filename = "")
+			bool save_file(const std::string &filename = "")
 			{
 				if (memory)
 				{
@@ -422,23 +437,31 @@ namespace shine
 					{
 						if (name != "")
 						{
-							if (sqlite3_open_v2(name.c_str(), &fileDatabase, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, 0) != SQLITE_OK)
-								;//KOMPEX_EXCEPT(sqlite3_errmsg(fileDatabase), sqlite3_errcode(fileDatabase));
+							if (sqlite3_open_v2(name.c_str(), &fileDatabase, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, 0) != SQLITE_OK) {
+								dump_error(fileDatabase);
+								return false;
+							}
 						}
 						else
 						{
-							if (sqlite3_open16(name_utf16.c_str(), &fileDatabase) != SQLITE_OK)
-								;//KOMPEX_EXCEPT(sqlite3_errmsg(fileDatabase), sqlite3_errcode(fileDatabase));
+							if (sqlite3_open16(name_utf16.c_str(), &fileDatabase) != SQLITE_OK) {
+								dump_error(fileDatabase);
+								return false;
+							}
 						}
 					}
 					else
 					{
-						if (sqlite3_open_v2(filename.c_str(), &fileDatabase, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, 0) != SQLITE_OK)
-							;//KOMPEX_EXCEPT(sqlite3_errmsg(fileDatabase), sqlite3_errcode(fileDatabase));
+						if (sqlite3_open_v2(filename.c_str(), &fileDatabase, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, 0) != SQLITE_OK) {
+							dump_error(fileDatabase);
+							return false;
+						}
 					}
 
-					backup(fileDatabase);
+					return backup(fileDatabase);
 				}
+
+				return true;
 			}
 
 			void save_file(const wchar_t *filename)
@@ -446,14 +469,15 @@ namespace shine
 				if (memory)
 				{
 					sqlite3 *fileDatabase;
-					if (sqlite3_open16(filename, &fileDatabase) != SQLITE_OK)
-						;//KOMPEX_EXCEPT(sqlite3_errmsg(fileDatabase), sqlite3_errcode(fileDatabase));
+					if (sqlite3_open16(filename, &fileDatabase) != SQLITE_OK) {
+						dump_error(fileDatabase);
+					}
 
 					backup(fileDatabase);
 				}
 			}
 
-			void backup(sqlite3 *destinationDatabase)
+			bool backup(sqlite3 *destinationDatabase)
 			{
 				sqlite3_backup *backup;
 				backup = sqlite3_backup_init(destinationDatabase, "main", handle, "main");
@@ -467,40 +491,52 @@ namespace shine
 						int errcode = sqlite3_errcode(destinationDatabase);
 						// there must be exactly one call to sqlite3_backup_finish() for each successful call to sqlite3_backup_init()
 						sqlite3_backup_finish(backup);
-						;//KOMPEX_EXCEPT(sqlite3_errmsg(destinationDatabase), sqlite3_errcode(destinationDatabase));
+						dump_error(destinationDatabase);
+						return false;
 					}
 
 					// clean up resources allocated by sqlite3_backup_init()
-					if (sqlite3_backup_finish(backup) != SQLITE_OK)
-						;//KOMPEX_EXCEPT(sqlite3_errmsg(destinationDatabase), sqlite3_errcode(destinationDatabase));
+					if (sqlite3_backup_finish(backup) != SQLITE_OK) {
+						dump_error(destinationDatabase);
+						return false;
+					}
 				}
 
-				if (sqlite3_close(destinationDatabase) != SQLITE_OK)
-					;//KOMPEX_EXCEPT(sqlite3_errmsg(destinationDatabase), sqlite3_errcode(destinationDatabase));
+				if (sqlite3_close(destinationDatabase) != SQLITE_OK) {
+					dump_error(destinationDatabase);
+					return false;
+				}
+
+				return true;
 			}
 
 			bool db_readonly()
 			{
 				int result = sqlite3_db_readonly(handle, "main");
-				if (result == -1)
-					;//KOMPEX_EXCEPT("'main' is not the name of a database on connection handle", -1);
+				if (result == -1) {
+					dump_error();
+					return false;
+				}
 
-				return !!result;
+				return true;
 			}
 
 			void create_module(const std::string &moduleName, const sqlite3_module *module, void *clientData, void(*xDestroy)(void*))
 			{
-				if (sqlite3_create_module_v2(handle, moduleName.c_str(), module, clientData, xDestroy))
-					;//KOMPEX_EXCEPT(sqlite3_errmsg(handle), sqlite3_errcode(handle));
+				if (sqlite3_create_module_v2(handle, moduleName.c_str(), module, clientData, xDestroy)) {
+					dump_error();
+				}
 			}
 
-			int db_status(int operation, bool highwater = false, bool reset_value = false) const
+			int db_status(int operation, bool highwater = false, bool reset_value = false)
 			{
 				int cur;
 				int high;
 
-				if (sqlite3_db_status(handle, operation, &cur, &high, reset_value) != SQLITE_OK)
-					;//KOMPEX_EXCEPT(sqlite3_errmsg(handle), sqlite3_errcode(handle));
+				if (sqlite3_db_status(handle, operation, &cur, &high, reset_value) != SQLITE_OK) {
+					dump_error();
+					return -1;
+				}
 
 				if (highwater)
 					return high;
@@ -508,42 +544,42 @@ namespace shine
 				return cur;
 			}
 
-			int DBSTATUS_LOOKASIDE_USED() const
+			int DBSTATUS_LOOKASIDE_USED() 
 			{
 				return db_status(SQLITE_DBSTATUS_LOOKASIDE_USED);
 			}
 
-			int DBSTATUS_CACHE_USED() const
+			int DBSTATUS_CACHE_USED() 
 			{
 				return db_status(SQLITE_DBSTATUS_CACHE_USED);
 			}
 
-			int DBSTATUS_SCHEMA_USED() const
+			int DBSTATUS_SCHEMA_USED() 
 			{
 				return db_status(SQLITE_DBSTATUS_SCHEMA_USED);
 			}
 
-			int DBSTATUS_STMT_USED() const
+			int DBSTATUS_STMT_USED() 
 			{
 				return db_status(SQLITE_DBSTATUS_STMT_USED);
 			}
 
-			int DBSTATUS_CACHE_HIT() const
+			int DBSTATUS_CACHE_HIT() 
 			{
 				return db_status(SQLITE_DBSTATUS_CACHE_HIT);
 			}
 
-			int DBSTATUS_CACHE_MISS() const
+			int DBSTATUS_CACHE_MISS() 
 			{
 				return db_status(SQLITE_DBSTATUS_CACHE_MISS);
 			}
 
-			int DBSTATUS_CACHE_WRITE() const
+			int DBSTATUS_CACHE_WRITE() 
 			{
 				return db_status(SQLITE_DBSTATUS_CACHE_WRITE);
 			}
 
-			int DBSTATUS_DEFERRED_FKS() const
+			int DBSTATUS_DEFERRED_FKS() 
 			{
 				return db_status(SQLITE_DBSTATUS_DEFERRED_FKS);
 			}

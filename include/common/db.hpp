@@ -14,7 +14,7 @@ namespace shine {
 		{
 		public:
 			/**
-			*@brief 清空结果
+			*@brief 清空结果集
 			*/
 			void clear() {
 				_columns.clear();
@@ -61,11 +61,11 @@ namespace shine {
 			*@note
 			*/
 			const string * get(size_t row_num, const string & column_name) {
-				if (_rows.size() == 0 || row_num > _rows.size() - 1 || _columns.size() == 0)
+				if (_rows.empty() || row_num > _rows.size() - 1 || _columns.empty())
 					return nullptr;
 
 				auto iter = _columns.find(column_name);
-				if (iter == std::end(_columns) || iter->second > _columns.size() - 1)
+				if (iter == std::end(_columns) || _rows[row_num].empty() || iter->second > _rows[row_num].size() - 1)
 					return nullptr;
 
 				return &_rows[row_num][iter->second];
@@ -80,7 +80,8 @@ namespace shine {
 			*@note
 			*/
 			const string * get(size_t row_num, size_t column_num) {
-				if (_rows.size() == 0 || row_num > _rows.size() - 1 || _columns.size() == 0 || column_num > _columns.size() - 1)
+				if (_rows.size() == 0 || row_num > _rows.size() - 1 || _columns.size() == 0 
+					|| _rows[row_num].empty() || column_num > _rows[row_num].size() - 1)
 					return nullptr;
 
 				return &_rows[row_num][column_num];
@@ -109,7 +110,7 @@ namespace shine {
 			*/
 			void foreach_row(size_t row_num, std::function<void(size_t column_num, const string &column_name, const string &value)> func) {
 				if (func) {
-					if (_rows.size() == 0 || row_num > _rows.size() - 1)
+					if (_rows.empty() || row_num > _rows.size() - 1)
 						return;
 
 					row_t &row = _rows[row_num];
@@ -134,12 +135,12 @@ namespace shine {
 							func(i, m, _head[m], row[m]);
 					}
 				}
-			}
+			}	
 
 		protected:
-			SHINE_GEN_MEMBER_BODY(columns_t, columns);
-			SHINE_GEN_MEMBER_BODY(row_t, head);
-			SHINE_GEN_MEMBER_BODY(rows_t, rows);
+			SHINE_GEN_MEMBER_GETSET(columns_t, columns);
+			SHINE_GEN_MEMBER_GETSET(row_t, head);
+			SHINE_GEN_MEMBER_GETSET(rows_t, rows);
 
 		};
 	}

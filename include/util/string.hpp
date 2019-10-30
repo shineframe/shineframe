@@ -605,7 +605,19 @@ namespace shine
 		}
 
 #endif
-        static string print_hex_string(const string &str){
+		string gbk_to_utf8() const {
+			string utf8;
+			gbk_to_utf8(*this, utf8);
+			return std::move(utf8);
+		}
+
+		string utf8_to_gbk() const {
+			string gbk;
+			utf8_to_gbk(*this, gbk);
+			return std::move(gbk);
+		}
+
+		static string print_hex_string(const string &str) {
             static const uint8 buf[] = "0123456789ABCDEF";
             string ret;
             for (size_t i = 0; i < str.size(); i++)
