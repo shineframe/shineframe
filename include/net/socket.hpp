@@ -35,8 +35,20 @@ typedef SOCKET socket_t;
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#if defined SHINE_OS_LINUX
+
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+
+#elif defined SHINE_OS_APPLE
+
+#include <sys/event.h>
+
+#endif
+
+#include <sys/time.h>
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -319,15 +331,18 @@ namespace shine
 					{
 						struct timeval tv;
 						tv.tv_sec = timeout / 1000;
-						tv.tv_usec = timeout % 1000;
-						fd_set wset, rset;
+						tv.tv_usec = (timeout % 1000) * 1000;
+						fd_set wset;
 						FD_ZERO(&wset);
-						FD_ZERO(&rset);
 						FD_SET(fd, &wset);
-						FD_SET(fd, &rset);
 
-						if (::select((int)fd + 1, &rset, &wset, NULL, &tv) == 1)
-							ret = FD_ISSET(fd, &wset) == 1 ? true : false;
+                        if (::select((int)fd + 1, NULL, &wset, NULL, &tv) == 1){
+                            ret = FD_ISSET(fd, &wset) ? true : false;
+                        }
+							
+                        else{
+                            err = get_error();
+                        }
 					}
 				}
 				else
@@ -394,7 +409,7 @@ namespace shine
             */
             static bool create_socketpair(std::pair<socket_t, socket_t> &pair) {
 
-#if (defined SHINE_OS_LINUX || defined SHINE_OS_ANDROID)
+#if (defined SHINE_OS_LINUX || defined SHINE_OS_ANDROID || defined SHINE_OS_UNIX || defined SHINE_OS_APPLE)
                 int sockets[2];
                 if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0)
                     return false;

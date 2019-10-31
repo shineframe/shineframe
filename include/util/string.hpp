@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <vector>
 #include <algorithm>
-#ifdef SHINE_OS_LINUX
+#if (defined SHINE_OS_LINUX || defined SHINE_OS_APPLE)
 #include <iconv.h>
 #endif
 #include "../common/define.hpp"
@@ -574,7 +574,7 @@ namespace shine
 			delete[]sz_gbk;
 			delete[]wsz_gbk;
 		}
-#elif defined SHINE_OS_LINUX
+#elif (defined SHINE_OS_LINUX || defined SHINE_OS_APPLE)
 		static void convert(const char* from, const char *to, const string &input, string &output) {
 			output.clear();
 			size_t input_len = input.length();
