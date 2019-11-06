@@ -7,7 +7,7 @@
 #include "iocp.hpp"
 #elif (defined SHINE_OS_LINUX)
 #include "epoll.hpp"
-#elif (defined SHINE_OS_UNIX)
+#elif (defined SHINE_OS_UNIX || defined SHINE_OS_APPLE)
 #include "kqueue.hpp"
 #endif
 

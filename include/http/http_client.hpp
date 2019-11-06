@@ -228,7 +228,7 @@ namespace shine
                     if (addr.find(":") == string::npos)
                         addr += ":80";
 
-                    if (!net::socket::connect(get_socket_fd(), addr, get_recv_timeout()))
+                    if (net::socket::connect(get_socket_fd(), addr, get_recv_timeout()) != net::socket::e_success)
                     {
                         close_connection();
                         return false;

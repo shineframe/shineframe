@@ -110,40 +110,62 @@ namespace shine
             return buf;
         }
 
-        int16 to_int16(){
+		static bool is_integer(const string &str) {
+			if (str.empty()) return false;
+			for (size_t i = 0; i < str.size(); i++)
+			{
+				if (str[i] < '0' || str[i] > '9') return false;
+			}
+
+			return true;
+		}
+
+		bool is_integer() const{
+			return is_integer(*this);
+		}
+
+        int16 to_int16() const{
+			if (!is_integer(*this)) return 0;
             return (int16)::atoi(this->c_str());
         }
 
         uint16 to_uint16() const {
-            return (uint16)::atoi(this->c_str());
+			if (!is_integer(*this)) return 0;
+			return (uint16)::atoi(this->c_str());
         }
 
         int32 to_int32() const{
-            return ::atoi(this->c_str());
+			if (!is_integer(*this)) return 0;
+			return ::atoi(this->c_str());
         }
 
         uint32 to_uint32() const {
-            return (uint32)::atoi(this->c_str());
+			if (!is_integer(*this)) return 0;
+			return (uint32)::atoi(this->c_str());
         }
 
         Long to_long() const {
-            return (Long)::atol(this->c_str());
+			if (!is_integer(*this)) return 0;
+			return (Long)::atol(this->c_str());
         }
 
         uLong to_ulong() const {
-            return (uLong)::atol(this->c_str());
+			if (!is_integer(*this)) return 0;
+			return (uLong)::atol(this->c_str());
         }
 
         int64 to_int64() const {
-            return ::atoll(this->c_str());
+			if (!is_integer(*this)) return 0;
+			return ::atoll(this->c_str());
         }
 
         uint64 to_uint64() const {
-            return (uint64)::atoll(this->c_str());
+			if (!is_integer(*this)) return 0;
+			return (uint64)::atoll(this->c_str());
         }
 
         Float to_float() const {
-            return (Float)::atof(this->c_str());
+			return (Float)::atof(this->c_str());
         }
 
         Double to_double() const {

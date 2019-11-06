@@ -392,7 +392,7 @@ namespace shine
                 set_type(peer::e_connector);
                 set_monitor_events(0);
 
-                set_socket_fd(socket::create(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+                set_socket_fd(socket::create(PF_INET, SOCK_STREAM, IPPROTO_TCP));
                 if (get_socket_fd() == invalid_socket)
                     return false;
 
@@ -400,15 +400,19 @@ namespace shine
                     return false;
 
                 socket::set_noblock(get_socket_fd());
-                if (socket::connect(get_socket_fd(), get_remote_addr().get_address_string(), 0))
+                auto rc = socket::connect(get_socket_fd(), get_remote_addr().get_address_string(), 0);
+                if (rc == socket::e_success)
                 {
                     
                     set_type(peer::e_connection);
                     get_connect_callback()(true, this);
                 }
-                else
+                else if (rc == socket::e_inprocess)
                 {
                     do_monitor_events(EVFILT_WRITE, ENABLE);
+                }
+                else{
+                    return false;
                 }
 
                 return true;
@@ -448,7 +452,7 @@ namespace shine
                 socket::close(get_socket_fd());
                 set_socket_fd(invalid_socket);
 
-                socket_t fd = socket::create(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+                socket_t fd = socket::create(PF_INET, SOCK_STREAM, IPPROTO_TCP);
                 if (fd == invalid_socket)
                     return false;
 

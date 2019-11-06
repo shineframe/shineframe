@@ -10,6 +10,7 @@
 //define something for Windows (32-bit only)
 #endif
 #elif __APPLE__
+#define SHINE_OS_APPLE
 #include "TargetConditionals.h"
 #if TARGET_IPHONE_SIMULATOR
 // iOS Simulator
