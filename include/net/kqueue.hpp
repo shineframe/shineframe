@@ -403,7 +403,6 @@ namespace shine
                 auto rc = socket::connect(get_socket_fd(), get_remote_addr().get_address_string(), 0);
                 if (rc == socket::e_success)
                 {
-                    
                     set_type(peer::e_connection);
                     get_connect_callback()(true, this);
                 }

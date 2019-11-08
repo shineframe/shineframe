@@ -1,21 +1,4 @@
- /**
- *****************************************************************************
- *
- *@file string.hpp
- *
- *@brief ×Ö·û´®·â×°
- *
- *@todo 
- * 
- *@note shineframe¿ª·¢¿ò¼Ü https://github.com/shineframe/shineframe
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/15 
- *****************************************************************************
- */
+
 #pragma once
 #include <iostream>
 #include <stdlib.h>
@@ -24,8 +7,10 @@
 #include <stdarg.h>
 #include <vector>
 #include <algorithm>
+#if !(defined SHINE_OS_ANDROID)
 #if (defined SHINE_OS_LINUX || defined SHINE_OS_APPLE)
 #include <iconv.h>
+#endif
 #endif
 #include "../common/define.hpp"
 #include "tool.hpp"
@@ -110,62 +95,40 @@ namespace shine
             return buf;
         }
 
-		static bool is_integer(const string &str) {
-			if (str.empty()) return false;
-			for (size_t i = 0; i < str.size(); i++)
-			{
-				if (str[i] < '0' || str[i] > '9') return false;
-			}
-
-			return true;
-		}
-
-		bool is_integer() const{
-			return is_integer(*this);
-		}
-
-        int16 to_int16() const{
-			if (!is_integer(*this)) return 0;
+        int16 to_int16(){
             return (int16)::atoi(this->c_str());
         }
 
         uint16 to_uint16() const {
-			if (!is_integer(*this)) return 0;
-			return (uint16)::atoi(this->c_str());
+            return (uint16)::atoi(this->c_str());
         }
 
         int32 to_int32() const{
-			if (!is_integer(*this)) return 0;
-			return ::atoi(this->c_str());
+            return ::atoi(this->c_str());
         }
 
         uint32 to_uint32() const {
-			if (!is_integer(*this)) return 0;
-			return (uint32)::atoi(this->c_str());
+            return (uint32)::atoi(this->c_str());
         }
 
         Long to_long() const {
-			if (!is_integer(*this)) return 0;
-			return (Long)::atol(this->c_str());
+            return (Long)::atol(this->c_str());
         }
 
         uLong to_ulong() const {
-			if (!is_integer(*this)) return 0;
-			return (uLong)::atol(this->c_str());
+            return (uLong)::atol(this->c_str());
         }
 
         int64 to_int64() const {
-			if (!is_integer(*this)) return 0;
-			return ::atoll(this->c_str());
+            return ::atoll(this->c_str());
         }
 
         uint64 to_uint64() const {
-			if (!is_integer(*this)) return 0;
-			return (uint64)::atoll(this->c_str());
+            return (uint64)::atoll(this->c_str());
         }
 
         Float to_float() const {
-			return (Float)::atof(this->c_str());
+            return (Float)::atof(this->c_str());
         }
 
         Double to_double() const {
@@ -548,20 +511,21 @@ namespace shine
             return find(text) != std::string::npos;
         }
 
+#if !(defined SHINE_OS_ANDROID)
 #ifdef SHINE_OS_WINDOWS
 /*
 		static string gbk_2_utf8(const string &gbk_str) {
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt_utf8;//UTF-8<->Unicode×ª»»Æ÷
-			std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>>cvt_ansi(new std::codecvt<wchar_t, char, std::mbstate_t>("CHS"));//GBK<->Unicode×ª»»Æ÷
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt_utf8;//UTF-8<->Unicode×ªï¿½ï¿½ï¿½ï¿½
+			std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>>cvt_ansi(new std::codecvt<wchar_t, char, std::mbstate_t>("CHS"));//GBK<->Unicode×ªï¿½ï¿½ï¿½ï¿½
 			std::wstring unicode_str = cvt_ansi.from_bytes(gbk_str);
 			return cvt_utf8.to_bytes(unicode_str);
 		}
 
 		static string utf8_2_gbk(const string &utf8_str) {
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt_utf8;//UTF-8<->Unicode×ª»»Æ÷
-			std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>>cvt_ansi(new std::codecvt<wchar_t, char, std::mbstate_t>("CHS"));//GBK<->Unicode×ª»»Æ÷
-			std::wstring unicode_str = cvt_utf8.from_bytes(utf8_str);//UTF-8×ª»»ÎªUnicode
-			return cvt_ansi.to_bytes(unicode_str);//Unicode×ª»»ÎªGBK
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt_utf8;//UTF-8<->Unicode×ªï¿½ï¿½ï¿½ï¿½
+			std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>>cvt_ansi(new std::codecvt<wchar_t, char, std::mbstate_t>("CHS"));//GBK<->Unicode×ªï¿½ï¿½ï¿½ï¿½
+			std::wstring unicode_str = cvt_utf8.from_bytes(utf8_str);//UTF-8×ªï¿½ï¿½ÎªUnicode
+			return cvt_ansi.to_bytes(unicode_str);//Unicode×ªï¿½ï¿½ÎªGBK
 		}*/
 
 		static void gbk_to_utf8(const string& gbk, string &utf8)
@@ -638,7 +602,7 @@ namespace shine
 			utf8_to_gbk(*this, gbk);
 			return std::move(gbk);
 		}
-
+#endif
 		static string print_hex_string(const string &str) {
             static const uint8 buf[] = "0123456789ABCDEF";
             string ret;

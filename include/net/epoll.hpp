@@ -381,15 +381,18 @@ namespace shine
                 if (!socket::bind(get_socket_fd(), get_bind_addr().get_address_string()))
                     return false;
 
-                if (socket::connect(get_socket_fd(), get_remote_addr().get_address_string(), 0))
+                auto rc = socket::connect(get_socket_fd(), get_remote_addr().get_address_string(), 0);
+                if (rc == socket::e_success)
                 {
-                    socket::set_noblock(get_socket_fd());
                     set_type(peer::e_connection);
                     get_connect_callback()(true, this);
                 }
-                else
+                else if (rc == socket::e_inprocess)
                 {
                     do_monitor_events(EPOLLOUT);
+                }
+                else{
+                    return false;
                 }
 
                 return true;

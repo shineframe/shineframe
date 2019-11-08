@@ -268,7 +268,8 @@ namespace shine
                 e_parse_failed = 1,
                 e_dns_failed = 2,
                 e_inprocess = 3,
-                e_timeout = 4
+                e_timeout = 4,
+                e_other = 5
             };
 			static connect_error_t connect(socket_t fd, const string &addr, uint32 timeout)
 			{
@@ -328,30 +329,35 @@ namespace shine
 					int32 err = get_error();
 #if (defined SHINE_OS_WINDOWS)
 					if (err != WSAEINPROGRESS && err != WSAEWOULDBLOCK) {
-						ret = e_inprocess;
+						ret = e_other;
 					}
 #else
 					if (err != EINPROGRESS && err != EWOULDBLOCK) {
-						ret = e_inprocess;
+						ret = e_other;
 					}
 #endif
-					else if (timeout > 0)
-					{
-						struct timeval tv;
-						tv.tv_sec = timeout / 1000;
-						tv.tv_usec = (timeout % 1000) * 1000;
-						fd_set wset;
-						FD_ZERO(&wset);
-						FD_SET(fd, &wset);
+                    else{
+                        if (timeout > 0)
+                        {
+                            struct timeval tv;
+                            tv.tv_sec = timeout / 1000;
+                            tv.tv_usec = (timeout % 1000) * 1000;
+                            fd_set wset;
+                            FD_ZERO(&wset);
+                            FD_SET(fd, &wset);
 
-                        if (::select((int)fd + 1, NULL, &wset, NULL, &tv) == 1){
-                            ret = FD_ISSET(fd, &wset) ? e_success : e_timeout;
+                            if (::select((int)fd + 1, NULL, &wset, NULL, &tv) == 1){
+                                ret = FD_ISSET(fd, &wset) ? e_success : e_timeout;
+                            }
+                            
+                            else{
+                                err = get_error();
+                            }
                         }
-							
                         else{
-                            err = get_error();
+                            ret = e_inprocess;
                         }
-					}
+                    }
 				}
 				else
 				{

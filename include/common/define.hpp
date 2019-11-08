@@ -30,6 +30,7 @@
 #elif __ANDROID__
 // android
 #define SHINE_OS_ANDROID
+#define SHINE_OS_LINUX
 #define SHINE_OS "ANDROID"
 #elif __linux__
 // linux

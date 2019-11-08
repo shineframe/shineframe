@@ -1,21 +1,4 @@
- /**
- *****************************************************************************
- *
- *@file dll.hpp
- *
- *@brief ¶¯Ì¬¿â¸¨Öú
- *
- *@todo 
- * 
- *@note shineframe¿ª·¢¿ò¼Ü https://github.com/shineframe/shineframe
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/25 
- *****************************************************************************
- */
+
 #pragma once
 
 #include <iostream>

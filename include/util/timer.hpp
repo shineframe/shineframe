@@ -1,21 +1,4 @@
- /**
- *****************************************************************************
- *
- *@file timer.hpp
- *
- *@brief 定时器
- *
- *@todo 
- * 
- *@note shineframe开发框架 https://github.com/shineframe/shineframe
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/15 
- *****************************************************************************
- */
+
 #pragma once
 
 #include "../common/define.hpp"
