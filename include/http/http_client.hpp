@@ -79,7 +79,7 @@ namespace shine
                         }
 
                         shine::size_t cost_len = get_response().decode_header(get_buf().data() + get_buf_pos(), (pos - get_buf_pos()) + 4);
-                        if (cost_len == -1)
+                        if (cost_len == (shine::size_t)-1)
                             return false;
 
                         get_buf_pos() += cost_len;

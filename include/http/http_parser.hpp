@@ -19,14 +19,14 @@
 
 using namespace std;
 
-static const shine::int8* http_method_get = "GET";
-static const shine::int8* http_method_head = "HEAD";
-static const shine::int8* http_method_post = "POST";
-static const shine::int8* http_method_put = "PUT";
-static const shine::int8* http_method_delete_ = "DELETE";
-static const shine::int8* http_method_connect = "CONNECT";
-static const shine::int8* http_method_options = "OPTIONS";
-static const shine::int8* http_method_trace = "TRACE";
+#define http_method_get "GET"
+#define http_method_head "HEAD"
+#define http_method_post "POST"
+#define http_method_put "PUT"
+#define http_method_delete_  "DELETE"
+#define http_method_connect "CONNECT"
+#define http_method_options "OPTIONS"
+#define http_method_trace "TRACE"
 
 namespace shine
 {

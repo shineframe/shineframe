@@ -393,7 +393,6 @@ namespace shine
 				{
 					struct sockaddr *sa = result->ai_addr;
 					if (sa->sa_family == AF_INET) {
-						char *tmp = (char *)ip;
 						if (inet_ntop(AF_INET, (void *)&(((struct sockaddr_in *) sa)->sin_addr), ip, maxlen) != NULL)
 						{
 							ret.emplace_back(std::make_pair(ip, false));

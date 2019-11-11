@@ -33,9 +33,10 @@ namespace shine
 
 				sqlite_result *result = (sqlite_result*)para;
 
+				shine::size_t Count = (shine::size_t)count;
 				if (result->_columns.empty())
 				{
-					for (size_t i = 0; i < count; i++)
+					for (size_t i = 0; i < Count; i++)
 					{
 						result->_columns.emplace(name[i], i);
 						result->_head.emplace_back(name[i]);
@@ -43,8 +44,8 @@ namespace shine
 				}
 
 				row_t row;
-				row.resize(count);
-				for (size_t i = 0; i < count; i++)
+				row.resize(Count);
+				for (size_t i = 0; i < Count; i++)
 				{
 					row[i] = value[i];
 				}
@@ -61,11 +62,7 @@ namespace shine
 			enum encode_t { UTF8, UTF16 };
 
 		public:
-			sqlite() :
-				handle(0),
-				memory(false),
-				name(""),
-				name_utf16(L"")
+			sqlite()
 			{
 			}
 
@@ -487,8 +484,8 @@ namespace shine
 					if (sqlite3_backup_step(backup, -1) != SQLITE_DONE)
 					{
 						// save error message and error number - otherwise an error in sqlite3_backup_finish() could overwrite them
-						std::string errmsg = sqlite3_errmsg(destinationDatabase);
-						int errcode = sqlite3_errcode(destinationDatabase);
+// 						std::string errmsg = sqlite3_errmsg(destinationDatabase);
+// 						int errcode = sqlite3_errcode(destinationDatabase);
 						// there must be exactly one call to sqlite3_backup_finish() for each successful call to sqlite3_backup_init()
 						sqlite3_backup_finish(backup);
 						dump_error(destinationDatabase);
@@ -605,10 +602,10 @@ namespace shine
 			}
 
 			private:
-				struct sqlite3 *handle;
+				struct sqlite3 *handle = 0;
 				std::string name;
 				std::wstring name_utf16;
-				bool memory;
+				bool memory = false;
 
 		};
 	} // namespace db
