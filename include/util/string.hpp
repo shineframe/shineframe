@@ -7,14 +7,14 @@
 #include <stdarg.h>
 #include <vector>
 #include <algorithm>
+#include "../common/define.hpp"
+#include "tool.hpp"
+#include "md5.hpp"
 #if !(defined SHINE_OS_ANDROID)
 #if (defined SHINE_OS_LINUX || defined SHINE_OS_APPLE)
 #include <iconv.h>
 #endif
 #endif
-#include "../common/define.hpp"
-#include "tool.hpp"
-#include "md5.hpp"
 
 static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 "abcdefghijklmnopqrstuvwxyz"
