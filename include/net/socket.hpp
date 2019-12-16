@@ -352,6 +352,7 @@ namespace shine
                             
                             else{
                                 err = get_error();
+								ret = e_other;
                             }
                         }
                         else{

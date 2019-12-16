@@ -102,6 +102,10 @@ namespace shine
 
             return false;
         }
+
+		void clear_all() {
+			clear();
+		}
     private:
         SHINE_GEN_MEMBER_GETSET(uint64, id, = invalid_timer_id);
     };

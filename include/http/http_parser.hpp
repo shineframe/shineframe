@@ -221,8 +221,9 @@ namespace shine
                     return false;
 
                 buf.clear();
-                buf += get_method() + " " + get_url() + " " + get_version() + "\r\n";
-                for (auto &entry : get_entrys())
+				buf += get_method() + " " + get_url() + " " + get_version() + "\r\n";
+				buf += "Host: " + get_host() + "\r\n";
+				for (auto &entry : get_entrys())
                 {
                     buf += entry.get_key() + ": " + entry.get_value() + "\r\n";
                 }
@@ -304,8 +305,10 @@ namespace shine
                     entry.get_value().assign(data, tmp - data);
                     data = tmp + 2;
 
-                    if (entry.get_key() == "Content-Length")
-                        get_content_length() = entry.get_value().to_uint64();
+					if (entry.get_key() == "Content-Length")
+						get_content_length() = entry.get_value().to_uint64();
+					else if (entry.get_key() == "Transfer-Encoding" && entry.get_value() == "chunked")
+						set_is_chunk(true);
                     else
                         add_entry(std::move(entry));
                 }
@@ -352,6 +355,7 @@ namespace shine
         private:
             SHINE_GEN_MEMBER_GETSET(uint16, status_code, = 200);
 			SHINE_GEN_MEMBER_GETSET(string, status_desc);
+			SHINE_GEN_MEMBER_GETSET(bool, is_chunk, = false);
 		};
 
     }
