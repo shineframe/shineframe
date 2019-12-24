@@ -511,6 +511,66 @@ namespace shine
             return find(text) != std::string::npos;
         }
 
+		static bool is_utf8(const char* str, std::size_t length)
+		{
+			std::size_t i = 0;
+			unsigned char bytes = 0;//UFT8可用1-6个字节编码,ASCII用一个字节
+			unsigned char chr;
+			bool all_ascii = true; //如果全部都是ASCII, 说明不是UTF-8
+
+			for (i = 0; i < length; i++)
+			{
+				chr = *(str + i);
+
+				// 判断是否ASCII编码,如果不是,说明有可能是UTF-8,ASCII用7位编码,但用一个字节存,最高位标记为0,o0xxxxxxx
+				if ((chr & 0x80) != 0)
+					all_ascii = false;
+
+				if (bytes == 0) //如果不是ASCII码,应该是多字节符,计算字节数
+				{
+					if (chr >= 0x80)
+					{
+						if (chr >= 0xFC && chr <= 0xFD)
+							bytes = 6;
+						else if (chr >= 0xF8)
+							bytes = 5;
+						else if (chr >= 0xF0)
+							bytes = 4;
+						else if (chr >= 0xE0)
+							bytes = 3;
+						else if (chr >= 0xC0)
+							bytes = 2;
+						else
+						{
+							return false;
+						}
+						bytes--;
+					}
+				}
+				else //多字节符的非首字节,应为 10xxxxxx
+				{
+					if ((chr & 0xC0) != 0x80)
+					{
+						return false;
+					}
+					bytes--;
+				}
+			}
+
+			if (bytes > 0) //违返规则
+			{
+				return false;
+			}
+
+			if (all_ascii) //如果全部都是ASCII, 说明不是UTF-8
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+
 #if !(defined SHINE_OS_ANDROID)
 #ifdef SHINE_OS_WINDOWS
 /*

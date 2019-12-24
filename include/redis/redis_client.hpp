@@ -428,7 +428,7 @@ namespace shine
                     if (get_addr().find(":") == string::npos)
                         return false;
 
-                    if (!net::socket::connect(get_socket_fd(), get_addr(), 5000))
+                    if (net::socket::connect(get_socket_fd(), get_addr(), 5000) != net::socket::e_success)
                     {
 						std::cout << __FUNCTION__ << " connect failed." << std::endl;
                         close_connection();
