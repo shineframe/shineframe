@@ -33,6 +33,11 @@ namespace shine {
             return _queue.size_approx();
         }
 
+		void clear() {
+			T obj;
+			while (pop(obj));
+		}
+
     private:
         moodycamel::ConcurrentQueue<T> _queue;
     };
@@ -83,6 +88,11 @@ namespace shine {
         std::size_t wait_pop_bulk_timed(ARR arr, std::size_t count, std::int64_t timeout_usecs){
             return _queue.wait_dequeue_bulk_timed(arr, count, timeout_usecs);
         }
+
+		void clear() {
+			T obj;
+			while (wait_pop_timed(obj, 0));
+		}
 
     private:
         moodycamel::BlockingConcurrentQueue<T> _queue;

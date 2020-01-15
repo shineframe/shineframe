@@ -622,7 +622,7 @@ namespace shine
         public:
 
             void run() {
-
+				set_stop_flag(false);
                 while (!get_stop_flag())
                 {
                     DWORD timeout = (DWORD)_timer.do_timer();
@@ -778,7 +778,7 @@ namespace shine
         private:
             HANDLE _iocp;///<Íê³É¶Ë¿Ú¾ä±ú
 			SHINE_GEN_MEMBER_GETSET(timer_manager, timer);
-			SHINE_GEN_MEMBER_GETSET(bool, stop_flag);
+			SHINE_GEN_MEMBER_GETSET(bool, stop_flag, = false);
 
         protected:
 

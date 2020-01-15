@@ -502,7 +502,7 @@ namespace shine
         public:
 
             void run() {
-
+				set_stop_flag(false);
                 struct sigaction action;
                 action.sa_flags = 0;
 				action.sa_handler = [](int sig) {};

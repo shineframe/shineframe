@@ -316,6 +316,12 @@ namespace shine {
 			key.resize(mode / 8);
 			key_buf = aes_init(key.size());
 			aes_key_expansion((uint8*)key.data(), key_buf);
+
+            R[0] = 0x02;
+            R[1] = 0x00;
+            R[2] = 0x00;
+            R[3] = 0x00;
+
 		}
 		~aes_impl() {
 			free(key_buf);
@@ -327,14 +333,14 @@ namespace shine {
 		uint8 *key_buf;
 		static const size_t size = 16;
 
-		void coef_add(uint8 a[], uint8 b[], uint8 d[]) {
+		void coef_add(uint8 a[], uint8 b[], uint8 d[]) const{
 			d[0] = a[0] ^ b[0];
 			d[1] = a[1] ^ b[1];
 			d[2] = a[2] ^ b[2];
 			d[3] = a[3] ^ b[3];
 		}
 
-		void coef_mult(uint8 *a, uint8 *b, uint8 *d) {
+		void coef_mult(uint8 *a, uint8 *b, uint8 *d) const{
 			d[0] = gmult(a[0], b[0]) ^ gmult(a[3], b[1]) ^ gmult(a[2], b[2]) ^ gmult(a[1], b[3]);
 			d[1] = gmult(a[1], b[0]) ^ gmult(a[0], b[1]) ^ gmult(a[3], b[2]) ^ gmult(a[2], b[3]);
 			d[2] = gmult(a[2], b[0]) ^ gmult(a[1], b[1]) ^ gmult(a[0], b[2]) ^ gmult(a[3], b[3]);
@@ -347,7 +353,7 @@ namespace shine {
 
 		int Nr;
 
-		uint8 R[4] = { 0x02, 0x00, 0x00, 0x00 };
+		uint8 R[4];
 
 		uint8 * Rcon(uint8 i) {
 
@@ -366,7 +372,7 @@ namespace shine {
 			return R;
 		}
 
-		void add_round_key(uint8 *state, uint8 *w, uint8 r) {
+		void add_round_key(uint8 *state, uint8 *w, uint8 r) const{
 
 			uint8 c;
 
@@ -378,7 +384,7 @@ namespace shine {
 			}
 		}
 
-		void mix_columns(uint8 *state) {
+		void mix_columns(uint8 *state) const {
 
 			uint8 a[] = { 0x02, 0x01, 0x01, 0x03 }; // a(x) = {02} + {01}x + {01}x2 + {03}x3
 			uint8 i, j, col[4], res[4];
@@ -396,7 +402,7 @@ namespace shine {
 			}
 		}
 
-		void inv_mix_columns(uint8 *state) {
+		void inv_mix_columns(uint8 *state) const {
 
 			uint8 a[] = { 0x0e, 0x09, 0x0d, 0x0b }; // a(x) = {0e} + {09}x + {0d}x2 + {0b}x3
 			uint8 i, j, col[4], res[4];
@@ -414,7 +420,7 @@ namespace shine {
 			}
 		}
 
-		void shift_rows(uint8 *state) {
+		void shift_rows(uint8 *state) const{
 
 			uint8 i, k, s, tmp;
 
@@ -435,7 +441,7 @@ namespace shine {
 			}
 		}
 
-		void inv_shift_rows(uint8 *state) {
+		void inv_shift_rows(uint8 *state) const{
 
 			uint8 i, k, s, tmp;
 
@@ -455,7 +461,7 @@ namespace shine {
 		}
 
 
-		void sub_bytes(uint8 *state) {
+		void sub_bytes(uint8 *state) const{
 
 			uint8 i, j;
 			uint8 row, col;
@@ -470,7 +476,7 @@ namespace shine {
 		}
 
 
-		void inv_sub_bytes(uint8 *state) {
+		void inv_sub_bytes(uint8 *state) const{
 			uint8 i, j;
 			uint8 row, col;
 
@@ -483,7 +489,7 @@ namespace shine {
 			}
 		}
 
-		void sub_word(uint8 *w) {
+		void sub_word(uint8 *w) const{
 
 			uint8 i;
 
@@ -566,7 +572,7 @@ namespace shine {
 		/*
 		* Performs the AES cipher operation
 		*/
-		void aes_cipher(uint8 *in, uint8 *out, uint8 *w) {
+		void aes_cipher(uint8 *in, uint8 *out, uint8 *w) const{
 
 			uint8 state[4 * Nb];
 			uint8 r, i, j;
@@ -600,7 +606,7 @@ namespace shine {
 		/*
 		* Performs the AES inverse cipher operation
 		*/
-		void aes_inv_cipher(uint8 *in, uint8 *out, uint8 *w) {
+		void aes_inv_cipher(uint8 *in, uint8 *out, uint8 *w) const {
 
 			uint8 state[4 * Nb];
 			uint8 r, i, j;
@@ -639,7 +645,7 @@ namespace shine {
 
 		}
 
-		std::string encode(const std::string &data) {
+		std::string encode(const std::string &data) const {
 			std::string ret;
 			if (data.empty())
 			{
@@ -666,7 +672,7 @@ namespace shine {
 			return std::move(ret);
 		}
 
-		std::string decode(const std::string &data) {
+		std::string decode(const std::string &data) const {
 			std::string ret;
 			if (data.size() < impl.size + 1 || data.size() % impl.size != 1 || data[data.size() - 1] < 0 || data[data.size() - 1] > impl.size - 1)
 			{
