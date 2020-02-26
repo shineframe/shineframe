@@ -1,4 +1,3 @@
-
 #pragma once
 #include <iostream>
 #include <stdlib.h>
@@ -6,6 +5,7 @@
 #include <string>
 #include <stdarg.h>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include "../common/define.hpp"
 #include "tool.hpp"
@@ -414,29 +414,52 @@ namespace shine
             return *this;
         }
 
-        static std::vector<string> split(const string &str , const std::string &des){
-            std::vector<string> ret;
-            std::string::size_type des_len = des.size();
-            std::string::size_type begin = 0;
-            std::string::size_type end = str.find(des, begin);
-            
-            while (end != std::string::npos)
-            {
-                ret.push_back(str.substr(begin, end - begin));
-                begin = end + des_len;
-                end = str.find(des, begin);
-            }
+		static std::vector<string> split(const string &str, const std::string &des) {
+			std::vector<string> ret;
+			std::string::size_type des_len = des.size();
+			std::string::size_type begin = 0;
+			std::string::size_type end = str.find(des, begin);
 
-            ret.push_back(str.substr(begin, end));
+			while (end != std::string::npos)
+			{
+				ret.push_back(str.substr(begin, end - begin));
+				begin = end + des_len;
+				end = str.find(des, begin);
+			}
 
-            return ret;
-        }
+			ret.push_back(str.substr(begin, end));
 
-        std::vector<string> split(const std::string &des) const{
-            return std::move(split(*this, des));
-        }
+			return ret;
+		}
 
-        static size_type assert_size(const int8 *fmt, va_list args)
+		std::vector<string> split(const std::string &des) const {
+			return std::move(split(*this, des));
+		}
+
+
+		static std::set<string> split2(const string &str, const std::string &des) {
+			std::set<string> ret;
+			std::string::size_type des_len = des.size();
+			std::string::size_type begin = 0;
+			std::string::size_type end = str.find(des, begin);
+
+			while (end != std::string::npos)
+			{
+				ret.emplace(str.substr(begin, end - begin));
+				begin = end + des_len;
+				end = str.find(des, begin);
+			}
+
+			ret.emplace(str.substr(begin, end));
+
+			return ret;
+		}
+
+		std::set<string> split2(const std::string &des) const {
+			return std::move(split2(*this, des));
+		}
+
+		static size_type assert_size(const int8 *fmt, va_list args)
         {
 #if (defined SHINE_OS_WINDOWS)
 #pragma warning(disable:4996)
