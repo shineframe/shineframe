@@ -58,9 +58,9 @@ namespace shine
     public:
 #endif
 
-        bool open(const string &path, bool create = true){
+        bool open(const string &path, bool create = true, bool readonly = false){
 
-            if (create && !filesystem::file_exists(path))
+            if ((create && !readonly) && !filesystem::file_exists(path))
             {
                 size_t pos = path.rfind('\\');
                 if (pos == string::npos)
@@ -74,7 +74,7 @@ namespace shine
                     fclose(tmp);
             }
 
-            _file = fopen(path.c_str(), "rb+");
+            _file = fopen(path.c_str(), readonly ? "rb" : "rb+");
             _path = path;
             return _file != 0;
         }

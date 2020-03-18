@@ -200,9 +200,14 @@ namespace shine
 
 				if (sub_node.get_key().empty())
 				{
-					if (!node.get_array_childs())
-						node.get_array_childs() = std::make_shared<std::deque<json_node_t>>();
-					node.get_array_childs()->push_back(std::move(sub_node));
+					if (!sub_node.get_value().empty() 
+						|| sub_node.get_kv_childs_size() > 0
+						|| sub_node.get_array_childs_size() > 0)
+					{
+						if (!node.get_array_childs())
+							node.get_array_childs() = std::make_shared<std::deque<json_node_t>>();
+						node.get_array_childs()->push_back(std::move(sub_node));
+					}
 				}
 				else
 				{

@@ -109,9 +109,16 @@ namespace shine
             typedef std::map<string, string> parameters_t;
         public:
 
-            void add_entry(const entry_t &entry){
-                get_entrys().push_back(entry);
-            }
+			void add_entry(const string& key, const string &value) {
+				entry_t entry;
+				entry.set_key(key);
+				entry.set_value(value);
+				get_entrys().emplace_back(std::move(entry));
+			}
+
+			void add_entry(const entry_t &entry) {
+				get_entrys().push_back(entry);
+			}
 
             void add_entry(entry_t &&entry){
                 get_entrys().emplace_back(entry);
@@ -206,8 +213,10 @@ namespace shine
                     entry.get_value().assign(data, tmp - data);
                     data = tmp + 2;
 
-                    if (entry.get_key() == "Content-Length")
-                        get_content_length() = entry.get_value().to_uint64();
+					if (entry.get_key() == "Content-Length")
+						get_content_length() = entry.get_value().to_uint64();
+					else if (entry.get_key() == "Host")
+						set_host(entry.get_value());
                     else
                         add_entry(std::move(entry));
                 }
