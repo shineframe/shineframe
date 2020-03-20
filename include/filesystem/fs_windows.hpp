@@ -147,9 +147,13 @@ namespace shine
             return std::move(ret);
         }
 
-        inline bool unlink(const string &path) {
-            return !!DeleteFile(path.c_str());
-        }
+		inline bool remove(const string &path) {
+			return !!DeleteFile(path.c_str());
+		}
+
+		inline bool unlink(const string &path) {
+			return !!DeleteFile(path.c_str());
+		}
 
         inline size_t disk_free_space(const string &path) {
             DWORD dwSectPerClust, dwBytesPerSect, dwFreeClusters, dwTotalClusters;

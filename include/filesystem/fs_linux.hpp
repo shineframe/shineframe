@@ -85,9 +85,13 @@ namespace shine
                 return !!S_ISDIR(st.st_mode);
             }
 
-            inline bool unlink(const string &path){
-                return !::unlink(path.c_str());
-            }
+			inline bool remove(const string &path) {
+				return !::remove(path.c_str());
+			}
+
+			inline bool unlink(const string &path) {
+				return !::unlink(path.c_str());
+			}
 
             inline bool file_exists(const string &path){
                 return !::access(path.c_str(), F_OK);
