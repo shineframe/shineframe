@@ -200,7 +200,7 @@ namespace shine
                         for (auto &iter : tmp)
                             files.emplace_back(std::move(iter));
                     }
-                    else if (ent->d_type & DT_REG)
+                    else if (ent->d_type == DT_UNKNOWN || ent->d_type & DT_REG)
                     {
                         files.emplace_back(std::move(name));
                     }
