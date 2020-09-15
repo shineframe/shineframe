@@ -1,21 +1,3 @@
- /**
- *****************************************************************************
- *
- *@note shineframe������� https://github.com/shineframe/shineframe
- *
- *@file http_client.hpp
- *
- *@brief http�ͻ���
- *
- *@todo 
- *
- *@author sunjian 39215174@qq.com
- *
- *@version 1.0
- *
- *@date 2018/6/14 
- *****************************************************************************
- */
 #pragma once
 
 #include <iostream>
@@ -92,7 +74,7 @@ namespace shine
                         return true;
                     }
 
-                    if (get_decode_step() == http::e_decode_header)
+                    if (get_decode_step() == http::e_decode_header || get_decode_step() == http::e_decode_done)
                     {
                         auto pos = get_buf().find("\r\n\r\n", get_buf_pos());
                         if (pos == string::npos)
@@ -122,7 +104,7 @@ namespace shine
 						}
 						else {
 							shine::string &buf = get_buf();
-							shine::size_t pos = get_buf_pos();
+							shine::size_t &pos = get_buf_pos();
 							shine::string &body = get_response().get_body();
 							body.clear();
 
@@ -144,6 +126,7 @@ namespace shine
 									}
 									else
 									{
+										pos += len + 2;
 										break;
 									}
 
@@ -343,6 +326,7 @@ namespace shine
 
                 set_decode_step(http::e_decode_header);
                 get_buf().clear();
+				get_buf_pos() = 0;
                 get_response().clear();
 
                 for (;;)

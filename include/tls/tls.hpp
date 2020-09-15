@@ -7,11 +7,16 @@
 namespace shine {
 	namespace tls {
 		static inline bool init() {
-			if (!SSL_library_init()) {
-				return false;
-			}
+			static bool inited = false;
+			if (!inited)
+			{
+				if (!SSL_library_init()) {
+					return false;
+				}
 
-			SSL_load_error_strings();
+				SSL_load_error_strings();
+				inited = true;
+			}
 			return true;
 		}
 
@@ -79,12 +84,12 @@ namespace shine {
 				buf.resize(1024);
 			}
 
-            ~base(){
-                if (ssl != NULL)
-                {
-                    SSL_free(ssl);
-                }
-            }
+			~base() {
+				if (ssl != NULL)
+				{
+					SSL_free(ssl);
+				}
+			}
 
 			bool is_handshake_finished() {
 				return SSL_is_init_finished(ssl);
@@ -126,49 +131,49 @@ namespace shine {
 			}
 
 			bool recv(std::string &pure_data, const char *data, size_t len) {
-				if (len > 0){
+				if (len > 0) {
 					int w_len = BIO_write(read_bio, data, len);
 				}
 
 				if (!is_handshake_finished()) {
 					int rc = SSL_do_handshake(ssl);
-                    for (;;)
-                    {
-                        int r_len = BIO_read(write_bio, (void*)buf.data(), buf.size());
-                        if (r_len > 0) {
-                            send_func(buf.data(), r_len);
-                            if (r_len < buf.size())
-                            {
-                                break;
-                            }
-                        }
-                        else {
-                            if (rc != 1)
-                            {
-                                int err = SSL_get_error(ssl, r_len);
-                                if (err == SSL_ERROR_NONE || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-                                    return true;
-                                }
-                                else {
-                                    //error
-									on_handshake_callback_func(err, "Handshake error")
-                                    return false;
-                                }
-                            }
-                            else{
-                                break;
-                            }
-                        }
-                    }
+					for (;;)
+					{
+						int r_len = BIO_read(write_bio, (void*)buf.data(), buf.size());
+						if (r_len > 0) {
+							send_func(buf.data(), r_len);
+							if (r_len < buf.size())
+							{
+								break;
+							}
+						}
+						else {
+							if (rc != 1)
+							{
+								int err = SSL_get_error(ssl, r_len);
+								if (err == SSL_ERROR_NONE || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+									return true;
+								}
+								else {
+									//error
+									on_handshake_callback_func(err, "Handshake error");
+									return false;
+								}
+							}
+							else {
+								break;
+							}
+						}
+					}
 
 					if (rc != 1) {
 						int err = SSL_get_error(ssl, rc);
-                        if (err == SSL_ERROR_NONE || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+						if (err == SSL_ERROR_NONE || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
 							return true;
 						}
 						else {
 							//error
-                            on_handshake_callback_func(err, "Handshake error")
+							on_handshake_callback_func(err, "Handshake error");
 							return false;
 						}
 					}
@@ -185,18 +190,23 @@ namespace shine {
 
 								verifyresult = SSL_get_verify_result(ssl);
 								if (verifyresult == X509_V_OK) {
-                                    on_handshake_callback_func(verifyresult, "Handshake success");
+									on_handshake_callback_func(verifyresult, "Handshake success");
 								}
 								else {
-                                    on_handshake_callback_func(verifyresult, "Certificate verify Failed");
-                                    return false;
+									on_handshake_callback_func(verifyresult, "Certificate verify Failed");
+									return false;
 								}
 								X509_free(ssl_client_cert);
 							}
 							else {
-                                on_handshake_callback_func(-1, "There is no certificate");
-                                return false;
+								on_handshake_callback_func(-1, "There is no certificate");
+								return false;
 							}
+						}
+						else
+						{
+							on_handshake_callback_func(0, "Handshake success");
+							return true;
 						}
 					}
 				}
@@ -204,7 +214,7 @@ namespace shine {
 					for (;;)
 					{
 						int r_len = SSL_read(ssl, (void*)buf.data(), buf.size());
-						if (r_len > 0){
+						if (r_len > 0) {
 							pure_data.append(buf.data(), r_len);
 							if (r_len < buf.size())
 							{
@@ -242,7 +252,7 @@ namespace shine {
 
 		class server : public base {
 		public:
-			server(SSL_CTX *ctx_, bool verify_, send_func_t send_func_) : base(ctx_, verify_, send_func_) {
+			server(SSL_CTX *ctx_, bool verify_, send_func_t send_func_, on_handshake_callback_func_t on_handshake_callback_func_) : base(ctx_, verify_, send_func_, on_handshake_callback_func_) {
 				SSL_set_accept_state(ssl);
 			}
 
@@ -253,7 +263,7 @@ namespace shine {
 
 		class client : public base {
 		public:
-			client(SSL_CTX *ctx_, bool verify_, send_func_t send_func_) : base(ctx_, verify_, send_func_) {
+			client(SSL_CTX *ctx_, bool verify_, send_func_t send_func_, on_handshake_callback_func_t on_handshake_callback_func_) : base(ctx_, verify_, send_func_, on_handshake_callback_func_) {
 				SSL_set_connect_state(ssl);
 			}
 

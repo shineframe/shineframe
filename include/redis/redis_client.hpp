@@ -144,7 +144,7 @@ namespace shine
 
                 header.clear();
 
-                int8 ch = get_buf()[get_buf_pos()++];
+                int8 ch = get_buf()[(int32)(get_buf_pos()++)];
                 header.get_value().assign(get_buf().data() + get_buf_pos(), pos - get_buf_pos());
                 set_buf_pos(pos + 2);
 
@@ -248,7 +248,7 @@ namespace shine
                         return decode_result::not_enough_total;
                     }
 
-                    int8 ch = get_buf()[get_buf_pos()];
+                    int8 ch = get_buf()[(int32)get_buf_pos()];
 
                     data_ptr_t data = reply_data_pool.take();
                     data->clear();
@@ -396,7 +396,7 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(connection_t, connection);
         };
 
-        class sync_client : public client_base
+        class sync_client : public ::shine::http::client_base
         {
         public:
             sync_client()

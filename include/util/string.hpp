@@ -716,7 +716,7 @@ namespace shine
                 if (i > 0 && i % 8 == 0)
                     ret += ' ';
 
-                uint32 index = (uint8)str[i];
+                uint32 index = (uint8)str[(int32)i];
                 ret += buf[index >> 4];
                 ret += buf[index & 0xF];
                 ret += ' ';
@@ -854,7 +854,7 @@ namespace shine
 
 		static bool decode_url(string &ret, const char *url) {
 			ret.clear();
-			int len = strlen(url);
+			int len = (int32)strlen(url);
 			int pos = 0;
 			unsigned char *data = (unsigned char *)url;
 			while (data[pos])

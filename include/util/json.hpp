@@ -1,5 +1,3 @@
-
-
 #pragma once
 #include <string>
 #include <cassert>
@@ -89,8 +87,8 @@ namespace shine
 	private:
 		static inline bool skip_space(const string &data, size_t &pos) {
 			while (pos < data.size()
-				&& (data[pos] == '\r' || data[pos] == '\n'
-					|| data[pos] == '\t' || data[pos] == ' '))
+				&& (data[(int32)pos] == '\r' || data[(int32)pos] == '\n'
+					|| data[(int32)pos] == '\t' || data[(int32)pos] == ' '))
 			{
 				++pos;
 			}
@@ -100,7 +98,7 @@ namespace shine
 
 		static inline bool skip_number(const string &data, size_t &pos) {
 			while (pos < data.size()
-				&& ((data[pos] >= '0' && data[pos] <= '9') || data[pos] == '.' || data[pos] == '-'))
+				&& ((data[(int32)pos] >= '0' && data[(int32)pos] <= '9') || data[(int32)pos] == '.' || data[(int32)pos] == '-'))
 			{
 				++pos;
 			}
@@ -109,7 +107,7 @@ namespace shine
 		}
 
 		static inline bool find(int8 ch, const string &data, size_t &pos) {
-			while (pos < data.size() && data[pos] != ch)
+			while (pos < data.size() && data[(int32)pos] != ch)
 			{
 				++pos;
 			}
@@ -130,7 +128,7 @@ namespace shine
 			string &value = node.get_value();
 			auto tmp = value.find_first_of('.');
 			if (tmp != value.find_last_of('.')
-				|| value[value.size() - 1] == '.'
+				|| value[(int32)value.size() - 1] == '.'
 				|| (value.find_first_of('-') != 0 && value.find_first_of('-') != string::npos)
 				|| (value.size() >= 2 && value[0] == '-' && value[1] == '.')
 				)
@@ -143,7 +141,7 @@ namespace shine
 
 		static bool parse_string(json_node_t &node, const string &data, size_t &cost_len)
 		{
-			int8 ch = data[cost_len++];
+			int8 ch = data[(int32)(cost_len++)];
 			size_t value_begin = cost_len;
 
 			for (;;)
@@ -151,7 +149,7 @@ namespace shine
 				if (!find(ch, data, cost_len))
 					return false;
 
-				if (data[cost_len - 1] != '\\')
+				if (data[(int32)cost_len - 1] != '\\')
 					break;
 				else
 				{
@@ -176,7 +174,7 @@ namespace shine
 			cost_len += symbol.size();
 			SKIP_SPACE();
 
-			if (data[cost_len] != ',' && data[cost_len] != '}')
+			if (data[(int32)cost_len] != ',' && data[(int32)cost_len] != '}')
 				return false;
 
 			node.set_type(type);
@@ -217,13 +215,13 @@ namespace shine
 					node.get_kv_childs()->emplace(sub_node.get_key(), std::move(sub_node));
 				}
 
-				if (data[cost_len] == symbol)
+				if (data[(int32)cost_len] == symbol)
 				{
 					++cost_len;
 					node.set_decode_step(e_decode_end);
 					return true;
 				}
-				else if (data[cost_len] == ',')
+				else if (data[(int32)cost_len] == ',')
 				{
 					++cost_len;
 					continue;
@@ -295,7 +293,7 @@ namespace shine
 			{
 				SKIP_SPACE();
 
-				int8 ch = data[cost_len];
+				int8 ch = data[(int32)cost_len];
 				if (ch == '\'' || ch == '"')
 				{
 					size_t key_begin = ++cost_len;
@@ -323,12 +321,12 @@ namespace shine
 
 				if (!node.get_key().empty())
 				{
-					if (data[cost_len++] != ':')
+					if (data[(int32)(cost_len++)] != ':')
 						return false;
 					SKIP_SPACE();
 				}
 
-				int8 ch = data[cost_len];
+				int8 ch = data[(int32)cost_len];
 				if (ch == '{')
 				{
 					++cost_len;
@@ -341,7 +339,7 @@ namespace shine
 					node.set_type(e_array);
 					node.set_decode_step(e_decode_value);
 				}
-				else if ((ch >= '0' && ch <= '9') || (ch == '-' && data[cost_len + 1] >= '0' && data[cost_len + 1] <= '9'))
+				else if ((ch >= '0' && ch <= '9') || (ch == '-' && data[(int32)cost_len + 1] >= '0' && data[(int32)cost_len + 1] <= '9'))
 				{
 					return parse_number(node, data, cost_len);
 				}
@@ -382,7 +380,7 @@ namespace shine
 		{
 			for (size_t i = 0; i < in.size(); i++)
 			{
-				switch (in[i])
+				switch (in[(int32)i])
 				{
 				case '\\':
 					out += "\\\\";
@@ -409,7 +407,7 @@ namespace shine
 					out += "\\r";
 					break;
 				default:
-					out += in[i];
+					out += in[(int32)i];
 					break;
 				}
 
