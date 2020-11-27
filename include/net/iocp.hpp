@@ -6,6 +6,7 @@
 #include <ctime>
 #include <string>
 #include <mutex>
+#include <unordered_map>
 #include "../common/define.hpp"
 #include "../util/string.hpp"
 #include "../util/timer.hpp"
@@ -27,7 +28,10 @@ namespace shine
          * TODO: long description
          *
          */
-        
+		class connection;
+		typedef std::unordered_map<std::string, connection*> map_connection_t;
+		typedef map_connection_t * map_connection_p_t;
+
         class connection : public peer
         {
         public:
@@ -84,9 +88,14 @@ namespace shine
 
                 if (WSARecv(get_socket_fd(), &wsabuf, 1, &bytes, &flags, (LPOVERLAPPED)&ctx, nullptr) == SOCKET_ERROR)
                 {
+					int err = WSAGetLastError();
                     if (WSAGetLastError() != WSA_IO_PENDING)
                     {
                         /////
+                        if (err == 10054)
+                        {
+							return async_recv();
+                        }
                     }
                 }
 
@@ -158,9 +167,18 @@ namespace shine
                     if (!cb(this))
                     {
                         id = invalid_timer_id;
-                        shutdown(this->get_socket_fd(), SD_SEND);
-
-//                         close();
+						if (this->get_type() == e_udp_connection 
+							|| this->get_type() == e_udp_connector
+							|| this->get_type() == e_udp_acceptor
+							)
+						{
+							close();
+						}
+						else
+						{
+							shutdown(this->get_socket_fd(), SD_SEND);
+						}
+                        
                         return false;
                     }
                     else
@@ -210,6 +228,7 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(address_info_t, local_addr);
             SHINE_GEN_MEMBER_GETSET(address_info_t, remote_addr);
             SHINE_GEN_MEMBER_GETSET(int32, status, = context::e_idle);
+			SHINE_GEN_MEMBER_GETSET(map_connection_p_t, map_connection_p, = nullptr);
 
         public:
             virtual void close(bool force = true){
@@ -240,6 +259,87 @@ namespace shine
 
         };
 
+		class udp_connection : public connection {
+		public:
+			udp_connection() {
+				set_type(peer::e_udp_connection);
+			}
+			virtual ~udp_connection() {
+				if (_map_connection_p != nullptr)
+				{
+					_map_connection_p->erase(get_id());
+				}
+			}
+
+			virtual void close(bool force = true) {
+				stop_recv_timeout_timer();
+				stop_send_timeout_timer();
+
+				if (get_close_callback())
+					get_close_callback()(this);
+
+				if (force)
+					delete this;
+			}
+
+
+			/**
+			*@brief 异步接收数据
+			*@return void
+			*@warning
+			*@note
+			*/
+			virtual void async_recv()
+			{
+				start_recv_timeout_timer();
+			}
+
+			/**
+			*@brief 异步发送数据
+			*@param iov 数据块指针
+			*@param count 数据块个数
+			*@param flush 立即发送
+			*@return void
+			*@warning
+			*@note
+			*/
+			virtual void async_sendv(const iovec_t *iov, size_t count, bool flush = true)
+			{
+				for (size_t i = 0; i < count; i++)
+				{
+					int sended = 0;
+					const char *data = iov[i].data;
+					size_t size = iov[i].size;
+					for (; size > 0;)
+					{
+						int rc = ::sendto(get_socket_fd(), data + sended, size - sended, 0, (const sockaddr*)get_id().data(), get_id().size());
+						if (rc > 0)
+						{
+							sended += rc;
+							if (sended >= size)
+							{
+								break;
+							}
+						}
+						else if (rc <= 0)
+						{
+							if (WSAGetLastError() != WSA_IO_PENDING)
+							{
+								dump_error("WSASend error.");
+							}
+
+							break;
+						}
+
+					}
+				}
+			}
+
+
+			SHINE_GEN_MEMBER_GETSET(std::string, id);
+
+		};
+
         typedef std::function<bool(bool, connection *conn)> connection_callback_t;
         typedef std::function<bool(bool, connection *conn)> accept_callback_t;
         typedef std::function<void(bool, connector *conn)> connect_callback_t;
@@ -254,19 +354,23 @@ namespace shine
 
             virtual void close(bool force = true)
             {
-                connection::close(!get_reconnect());
-
-                if (get_reconnect())
+				force = !get_reconnect();
+                if (force)
                 {
-                    if (get_socket_fd() == invalid_socket)
-                    {
-                        get_timer_manager()->set_timer(get_reconnect_delay(), [this]()->bool{
-                            if (!this->async_connect())
-                                dump_error("async_connect error.");
-                            return false;
-                        });
-                    }
+					connection::close(force);
                 }
+				else
+				{
+					connection::close(force);
+					if (get_socket_fd() == invalid_socket)
+					{
+						get_timer_manager()->set_timer(get_reconnect_delay(), [this]()->bool {
+							if (!this->async_connect())
+								dump_error("async_connect error.");
+							return false;
+						});
+					}
+				}
             }
 
             virtual bool async_connect()
@@ -278,11 +382,9 @@ namespace shine
                 DWORD ret;
                 LPFN_CONNECTEX func = nullptr;
 
-                socket_t fd = socket::create(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-                if (fd == invalid_socket)
-                    return false;
-
-                set_socket_fd(fd);
+				set_socket_fd(socket::create(get_v6() ? AF_INET6 : AF_INET, SOCK_STREAM, IPPROTO_TCP));
+				if (get_socket_fd() == invalid_socket)
+					return false;
 
                 if (CreateIoCompletionPort((HANDLE)get_socket_fd(), get_kernel_fd(), 0, 0) != get_kernel_fd())
                     return false;
@@ -306,7 +408,7 @@ namespace shine
                 get_send_context().set_status(context::e_idle);
                 get_send_context().set_parent(this);
 
-                if (!func(fd, (SOCKADDR*)(&address), sizeof(address), nullptr, 0, &bytes, &(get_recv_context())))
+                if (!func(get_socket_fd(), (SOCKADDR*)(&address), sizeof(address), nullptr, 0, &bytes, &(get_recv_context())))
                 {
                     if (socket::get_error() != ERROR_IO_PENDING)
                         return false;
@@ -327,6 +429,185 @@ namespace shine
         protected:
 
         };
+
+		class udp_connector : public connector {
+
+		public:
+			udp_connector() : connector() {
+				set_type(peer::e_udp_connector);
+				get_recv_context().get_buf().resize(2048);
+			}
+			virtual ~udp_connector() {}
+
+			virtual void close(bool force = true)
+			{
+				force = !get_reconnect();
+
+				if (get_close_callback())
+					get_close_callback()(this);
+
+				stop_recv_timeout_timer();
+				stop_send_timeout_timer();
+
+// 				if (get_close_callback())
+// 					get_close_callback()(this);
+// 
+// 				if (force)
+// 					delete this;
+
+				if (force)
+				{
+					shutdown(get_socket_fd(), SD_BOTH);
+					delete this;
+				}
+				else
+				{
+						get_timer_manager()->set_timer(get_reconnect_delay(), [this]()->bool {
+							if (!this->async_connect())
+								dump_error("async_connect error.");
+							return false;
+						});
+				}
+			}
+
+			virtual bool async_connect()
+			{
+				socket::close(get_socket_fd());
+				set_socket_fd(invalid_socket);
+
+				set_socket_fd(socket::create(get_v6() ? AF_INET6 : AF_INET, SOCK_DGRAM));
+				if (get_socket_fd() == invalid_socket)
+					return false;
+
+				if (CreateIoCompletionPort((HANDLE)get_socket_fd(), get_kernel_fd(), 0, 0) != get_kernel_fd())
+					return false;
+
+// 				if (!socket::bind(get_socket_fd(), get_bind_addr().get_address_string()))
+// 					return false;
+// 				if (!socket::bind(get_socket_fd(), get_bind_addr().get_address_string()))
+// 					return false;
+
+				get_recv_context().set_status(context::e_connect);
+				get_recv_context().set_parent(this);
+				get_send_context().set_status(context::e_idle);
+				get_send_context().set_parent(this);
+
+				auto rc = ::connect(get_socket_fd(), (const sockaddr*)get_remote_addr().get_sockaddr().data(), get_remote_addr().get_sockaddr().size());
+// 				if (rc == socket::e_success) {
+					get_connect_callback()(true, this);
+// 				}
+
+// 				if (!func(get_socket_fd(), (SOCKADDR*)(&address), sizeof(address), nullptr, 0, &bytes, &(get_recv_context())))
+// 				{
+// 					if (socket::get_error() != ERROR_IO_PENDING)
+// 						return false;
+// 				}
+
+				return true;
+			}
+
+
+			virtual void async_recv() {
+
+				get_recv_context().set_status(context::e_recv);
+
+				context &ctx = get_recv_context();
+// 				if (ctx.get_status() != context::e_idle)
+// 					return;
+
+				_bytes_len = 0;
+				DWORD bytes = 0;
+				DWORD flags = 0;
+
+				WSABUF &wsabuf = ctx.get_WSABuf();
+				wsabuf.buf = (CHAR*)ctx.get_buf().data();
+				wsabuf.len = (ULONG)ctx.get_buf().size();
+
+				_addr_len = sizeof(sockaddr_in) + 16;
+
+				if (WSARecvFrom(get_socket_fd(), &wsabuf, 1, &bytes, &flags, (sockaddr*)_addr_buf, &_addr_len, (LPOVERLAPPED)&ctx, nullptr) == SOCKET_ERROR)
+// 				int rc = ::recvfrom(get_socket_fd(), wsabuf.buf, wsabuf.len, 0, (sockaddr*)_addr_buf, &_addr_len);
+// 				if (rc < 0)
+				{
+					int err = WSAGetLastError();
+					if (err != WSA_IO_PENDING)
+					{
+						/////
+						///
+						// 						std::cout <<" WSARecvFrom error:" << err << std::endl;
+						if (err == 10054)
+						{
+							return async_recv();
+						}
+					}
+				}
+				start_recv_timeout_timer();
+
+			}
+
+			/**
+			*@brief 异步发送数据
+			*@param iov 数据块指针
+			*@param count 数据块个数
+			*@param flush 立即发送
+			*@return void
+			*@warning
+			*@note
+			*/
+			virtual void async_sendv(const iovec_t *iov, size_t count, bool flush = true)
+			{
+				for (size_t i = 0; i < count; i++) {
+					int sended = 0;
+					const char *data = iov[i].data;
+					size_t size = iov[i].size;
+					for (; size > 0;)
+					{
+// 						int rc = ::sendto(get_socket_fd(), data + sended, size - sended, 0, (const sockaddr*)get_remote_addr().get_sockaddr().data(), get_remote_addr().get_sockaddr().size());
+						int rc = ::send(get_socket_fd(), data + sended, size - sended, 0);
+						if (rc > 0)
+						{
+							sended += rc;
+							if (sended >= size)
+							{
+								break;
+							}
+						}
+						else if (rc <= 0)
+						{
+							if (WSAGetLastError() != WSA_IO_PENDING)
+							{
+								dump_error("WSASend error.");
+								break;
+							}
+						}
+
+					}
+
+				}
+// 				WSABUF &wsabuf = ctx.get_WSABuf();
+// 				wsabuf.buf = (CHAR*)ctx.get_buf().data();
+// 				wsabuf.len = (ULONG)ctx.get_buf().size();
+
+				// 				if (WSASendTo(get_socket_fd(), &wsabuf, 1, &bytes, 0, (const sockaddr*)get_id().data(), get_id().size(), (LPOVERLAPPED)&get_send_context(), nullptr) == SOCKET_ERROR)
+				// 				{
+				// 					if (WSAGetLastError() != WSA_IO_PENDING)
+				// 					{
+				// 						dump_error("WSASend error.");
+				// 					}
+				// 				}
+
+
+			}
+
+		public:
+
+		protected:
+			SHINE_GEN_MEMBER_GETSET(string, id);
+			char _addr_buf[128];
+			int _addr_len = 0;
+			DWORD _bytes_len = 0;
+
+		};
 
         class acceptor : public connection{
             friend class proactor_engine;
@@ -452,6 +733,158 @@ namespace shine
             DWORD _bytes_len = 0;
         };
 
+		class udp_acceptor : public connection {
+			friend class proactor_engine;
+		public:
+			udp_acceptor() {
+				set_type(peer::e_udp_acceptor);
+				get_recv_context().get_buf().resize(2048);
+			}
+			virtual ~udp_acceptor() {}
+
+		private:
+
+			virtual bool async_listen_accept(const string &addr)
+			{
+				if (!socket::parse_addr(addr, get_local_addr()))
+					return false;
+
+				socket::close(get_socket_fd());
+				set_socket_fd(invalid_socket);
+
+				socket_t fd = socket::create(AF_INET, SOCK_DGRAM);
+				if (fd == invalid_socket)
+					return false;
+
+				set_socket_fd(fd);
+
+				if (!socket::bind(get_socket_fd(), addr))
+					return false;
+
+				if (CreateIoCompletionPort((HANDLE)get_socket_fd(), get_kernel_fd(), 0, 0) != get_kernel_fd())
+					return false;
+
+				get_recv_context().set_parent(this);
+
+				return async_accept();
+			}
+
+			bool async_accept() {
+
+				get_recv_context().set_status(context::e_udp_accept);
+
+				context &ctx = get_recv_context();
+
+				_bytes_len = 0;
+				DWORD bytes = 0;
+				DWORD flags = 0;
+
+				WSABUF &wsabuf = ctx.get_WSABuf();
+				wsabuf.buf = (CHAR*)ctx.get_buf().data();
+				wsabuf.len = (ULONG)ctx.get_buf().size();
+				
+				_addr_len = sizeof(sockaddr_in) + 16;
+				
+				if (WSARecvFrom(get_socket_fd(), &wsabuf, 1, &bytes, &flags, (sockaddr*)_addr_buf, &_addr_len,(LPOVERLAPPED)&ctx, nullptr) == SOCKET_ERROR)
+				{
+					int err = WSAGetLastError();
+					if (err != WSA_IO_PENDING)
+					{
+						/////
+						///
+// 						std::cout <<" WSARecvFrom error:" << err << std::endl;
+						if (err == 10054)
+						{
+							return async_accept();
+						}
+					}
+				}
+
+				return true;
+			}
+
+			void on_recvfrom(bool status, int len) {
+				udp_connection *conn = nullptr;
+				if (status)
+				{
+					std::string id(_addr_buf, _addr_len);
+					auto iter = _map_connection.find(id);
+					if (iter == _map_connection.end())
+					{
+						string addrstr;
+						sockaddr_in *addr = (sockaddr_in*)_addr_buf;
+						addrstr.format("%s:%d", inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
+
+// 						socket_t fd = socket::create(AF_INET, SOCK_DGRAM);
+// 						if (fd == invalid_socket)
+// 							return;
+// 
+// 						
+// 						if (!socket::bind(fd, get_local_addr().get_address_string())) {
+// 							socket::close(fd);
+// 							return;
+// 						}
+// 
+// 						if (socket::connect(fd, addrstr, 0) != socket::e_success)
+// 						{
+// 							socket::close(fd);
+// 							return;
+// 						}
+// 
+// 						if (CreateIoCompletionPort((HANDLE)fd, get_kernel_fd(), 0, 0) != get_kernel_fd())
+// 							return;
+
+						conn = new udp_connection();
+						conn->set_id(id);
+						conn->set_kernel_fd(get_kernel_fd());
+						conn->set_socket_fd(get_socket_fd());
+						conn->set_timer_manager(get_timer_manager());
+						conn->set_map_connection_p(&_map_connection);
+
+						conn->set_local_addr(get_local_addr());
+						socket::parse_addr(addrstr, conn->get_remote_addr());
+// 						socket::set_nodelay(fd);
+
+						_map_connection.emplace(id, conn);
+
+						if (!get_accept_callback()(status, conn)) {
+							conn->close();
+							close();
+							return;
+						}
+						else
+						{
+						}
+
+					}
+					else
+					{
+						conn = (udp_connection*)iter->second;
+					}
+
+					if (!conn->get_recv_callback()(get_recv_context().get_buf().data(), len, conn)) {
+						conn->close();
+					}
+					else
+					{
+						conn->async_recv();
+					}
+
+				}
+				async_accept();
+
+			}
+
+		protected:
+			SHINE_GEN_MEMBER_GETREG(accept_callback_t, accept_callback, = nullptr);
+			SHINE_GEN_MEMBER_GETSET(socket_t, new_conn_fd, = invalid_socket);
+			SHINE_GEN_MEMBER_GETSET(map_connection_t, map_connection);
+			char _addr_buf[128];
+			int _addr_len = 0;
+			DWORD _bytes_len = 0;
+		};
+
+
         class proactor_engine{
         public:
             proactor_engine() {
@@ -480,20 +913,33 @@ namespace shine
                         obj->get_connect_callback()(true, obj);
                     }
                 }
-                else if (ctx->get_status() == context::e_accept)
-                {
-                    acceptor *&obj = (acceptor *&)ctx->get_parent();
-                    if (obj->get_status() == context::e_close)
-                    {
-                        ctx->set_status(context::e_close);
-                        obj->close();
-                    }
-                    else
-                    {
-                         obj->on_accept(true);
-                    }
-                }
-                else if (ctx->get_status() == context::e_recv)
+				else if (ctx->get_status() == context::e_accept)
+				{
+					acceptor *&obj = (acceptor *&)ctx->get_parent();
+					if (obj->get_status() == context::e_close)
+					{
+						ctx->set_status(context::e_close);
+						obj->close();
+					}
+					else
+					{
+						obj->on_accept(true);
+					}
+				}
+				else if (ctx->get_status() == context::e_udp_accept)
+				{
+					udp_acceptor *&obj = (udp_acceptor *&)ctx->get_parent();
+					if (obj->get_status() == context::e_close)
+					{
+						ctx->set_status(context::e_close);
+						obj->close();
+					}
+					else
+					{
+						obj->on_recvfrom(true, len);
+					}
+				}
+				else if (ctx->get_status() == context::e_recv)
                 {
                     connection *&obj = (connection *&)ctx->get_parent();
 
@@ -609,7 +1055,7 @@ namespace shine
                 {
                     connection *&obj = (connection *&)ctx->get_parent();
                     ctx->set_status(context::e_close);
-                    obj->close();
+					obj->close();
                 }
                 else if (ctx->get_status() == context::e_send)
                 {
@@ -622,9 +1068,9 @@ namespace shine
         public:
 
             void run() {
-				set_stop_flag(false);
-                while (!get_stop_flag())
-                {
+
+				while (!get_stop_flag())
+				{
                     DWORD timeout = (DWORD)_timer.do_timer();
 
                     void *key = nullptr;
@@ -646,8 +1092,11 @@ namespace shine
                         break;
                     }
 
-                    if (rc == FALSE)
+					if (rc == FALSE) {
+// 						std::cout << socket::get_error_str(error) << std::endl;
                         handle_failed(ctx, len);
+
+					}
                     else
                         handle_success(ctx, len);
 
@@ -655,7 +1104,7 @@ namespace shine
             }
 
             void stop() {
-				set_stop_flag(true);
+
             }
 
             /**
@@ -683,6 +1132,7 @@ namespace shine
 				if (ip_arr.size() > 0)
 				{
 					conn_info.set_ip(ip_arr[0].first);
+					conn_info.set_v6(ip_arr[0].second);
 				}
 
                 address_info_t bind_info;
@@ -693,6 +1143,7 @@ namespace shine
                 conn->set_timer_manager(&_timer);
                 conn->set_kernel_fd(_iocp);
                 conn->set_remote_addr(conn_info);
+				conn->set_v6(conn_info.get_v6());
                 conn->set_bind_addr(bind_info);
                 conn->set_name(name);
                 conn->set_reconnect(reconnect);
@@ -701,6 +1152,7 @@ namespace shine
 
                 if (!conn->async_connect()) {
 					conn->dump_error("async_connect error.");
+					conn->set_reconnect(false);
                     conn->close();
                     return false;
                 }
@@ -708,6 +1160,51 @@ namespace shine
                 return true;
             }
 
+			/**
+			*@brief 新建一个客户端连接
+			*@param name 名称
+			*@param conn_addr 对端地址host:port / ip:port
+			*@param cb 连接回调
+			*@param bind_addr 本端地址host:port / ip:port
+			*@param reconnect 是否自动重连
+			*@param reconnect_delay 自动重连间隔
+			*@return bool
+			*@warning
+			*@note
+			*/
+
+			bool add_udp_connector(const string &name, const string &conn_addr, connect_callback_t cb, const string bind_addr = "0.0.0.0:0", bool reconnect = true, uint32 reconnect_delay = 5000) {
+				if (_iocp == nullptr)
+					return false;
+
+				address_info_t conn_info;
+				if (!socket::parse_addr(conn_addr, conn_info))
+					return false;
+
+				address_info_t bind_info;
+				if (!socket::parse_addr(bind_addr, bind_info))
+					return false;
+
+				udp_connector *conn = new udp_connector;
+				conn->set_timer_manager(&_timer);
+				conn->set_kernel_fd(_iocp);
+				conn->set_remote_addr(conn_info);
+				conn->set_v6(conn_info.get_v6());
+				conn->set_bind_addr(bind_info);
+				conn->set_name(name);
+				conn->set_reconnect(reconnect);
+				conn->set_reconnect_delay(reconnect_delay);
+				conn->register_connect_callback(cb);
+
+				if (!conn->async_connect()) {
+					conn->dump_error("async_connect error.");
+					conn->set_reconnect(false);
+					conn->close();
+					return false;
+				}
+
+				return true;
+			}
 
             /** 
              *@brief 新增一个服务端侦听对象
@@ -741,6 +1238,39 @@ namespace shine
 
                 return true;
             }
+
+			/**
+			*@brief 新增一个UDP服务端侦听对象
+			*@param name 连接名称
+			*@param addr 侦听地址ip:port
+			*@param cb 新连接回调对象
+			*@return bool
+			*@warning
+			*@note
+			*/
+			bool add_udp_acceptor(const string &name, const string &addr, accept_callback_t cb) {
+				if (_iocp == nullptr)
+					return false;
+
+				address_info_t info;
+				if (!socket::parse_addr(addr, info))
+					return false;
+
+				udp_acceptor *conn = new udp_acceptor;
+
+				conn->set_timer_manager(&_timer);
+				conn->set_kernel_fd(_iocp);
+				conn->set_local_addr(info);
+				conn->set_name(name);
+				conn->register_accept_callback(cb);
+
+				if (!conn->async_listen_accept(addr)) {
+					conn->close();
+					return false;
+				}
+
+				return true;
+			}
 
 
             /** 
@@ -777,7 +1307,7 @@ namespace shine
 
         private:
             HANDLE _iocp;///<完成端口句柄
-			SHINE_GEN_MEMBER_GETSET(timer_manager, timer);
+            SHINE_GEN_MEMBER_GETSET(timer_manager, timer);
 			SHINE_GEN_MEMBER_GETSET(bool, stop_flag, = false);
 
         protected:

@@ -396,7 +396,7 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(connection_t, connection);
         };
 
-        class sync_client : public ::shine::http::client_base
+        class sync_client : public client_base
         {
         public:
             sync_client()

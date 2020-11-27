@@ -75,6 +75,8 @@ namespace shine
             SHINE_GEN_MEMBER_GETSET(shine::string, ip);
 			SHINE_GEN_MEMBER_GETSET(uint16, port);
 			SHINE_GEN_MEMBER_GETSET(bool, v6, = false);
+			SHINE_GEN_MEMBER_GETSET(shine::string, sockaddr);
+
 		};
 
         class socket{
@@ -90,14 +92,17 @@ namespace shine
              *@note 
             */
             static bool parse_addr(const string &addr, address_info_t &ret) {
-                size_type pos = addr.find(":");
+                size_type pos = addr.rfind(":");
                 if (pos == string::npos)
                     return false;
+
+				ret.set_sockaddr(addr_to_sockaddr(addr));
+				ret.set_v6(ret.get_sockaddr().size() != sizeof(sockaddr_in));
 
                 ret.get_ip().assign(addr.c_str(), pos);
                 ret.get_port() = atoi(addr.c_str() + pos + 1);
 
-                return !ret.get_ip().empty();
+                return !ret.get_sockaddr().empty();
             }
 
             static bool get_local_addr(socket_t fd, address_info_t &ret) {
@@ -192,10 +197,37 @@ namespace shine
              *@warning 
              *@note 
             */
-            static bool bind(socket_t fd, const string &addr/*ip:port*/){
+
+			static socket_t bind(const string &addr, int type, address_info_t &info, bool reuseport = true) {
+				if (!parse_addr(addr, info))
+					return invalid_socket;
+
 #if (defined SHINE_OS_LINUX || defined SHINE_OS_APPLE || defined SHINE_OS_UNIX)
-                if (addr == "0.0.0.0:0")
-                    return true;
+#endif
+				socket_t fd = create(info.get_v6() ? AF_INET6 : AF_INET, type, 0);
+
+				int opt = 1;
+				setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
+#if (defined SO_REUSEPORT)
+                if (reuseport){
+				    setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+                }
+#endif
+
+				if (::bind(fd, (struct sockaddr *)info.get_sockaddr().data(), info.get_sockaddr().size()) == 0) {
+					return fd;
+				}
+				else
+				{
+					close(fd);
+					return invalid_socket;
+				}
+			}
+
+            static bool bind(socket_t fd, const string &addr/*ip:port*/){
+//                 if (addr == "0.0.0.0:0")
+//                     return true;
+#if (defined SHINE_OS_LINUX || defined SHINE_OS_APPLE || defined SHINE_OS_UNIX)
 #endif
                 address_info_t info;
                 if (!parse_addr(addr, info))
@@ -210,12 +242,12 @@ namespace shine
 #endif
 #endif
 
-                struct sockaddr_in address;
-                address.sin_family = AF_INET;
-                address.sin_port = htons(info.get_port());
-                address.sin_addr.s_addr = inet_addr(info.get_ip().c_str());
+//                 struct sockaddr_in address;
+//                 address.sin_family = AF_INET;
+//                 address.sin_port = htons(info.get_port());
+//                 address.sin_addr.s_addr = inet_addr(info.get_ip().c_str());
 
-                return ::bind(fd, (struct sockaddr *)&address, sizeof(address)) == 0;
+                return ::bind(fd, (struct sockaddr *)info.get_sockaddr().data(), info.get_sockaddr().size()) == 0;
             }
 
             /** 
@@ -271,15 +303,17 @@ namespace shine
                 e_timeout = 4,
                 e_other = 5
             };
-			static connect_error_t connect(socket_t fd, const string &addr, uint32 timeout)
-			{
-				address_info_t info;
-				if (!parse_addr(addr, info))
-					return e_parse_failed;
+
+			static string addr_to_sockaddr(const string &addr /*domain:port*/) {
+				string ret;
+				size_type pos = addr.rfind(":");
+				if (pos == string::npos)
+					return ret;
+
 
 				char ip[128];
-				SHINE_SNPRINTF(ip, sizeof(ip) - 1, "%s", info.get_ip().c_str());
-				short port = info.get_port();
+				SHINE_SNPRINTF(ip, sizeof(ip) - 1, "%s", addr.substr(0, pos).c_str());
+				uint16 port = atoi(addr.c_str() + pos + 1);
 
 				void* svraddr = nullptr;
 				int32 svraddr_len = 0;
@@ -296,7 +330,7 @@ namespace shine
 				if (sa->sa_family == AF_INET) {
 					char *tmp = (char *)ip;
 					if (inet_ntop(AF_INET, (void *)&(((struct sockaddr_in *) sa)->sin_addr), tmp, maxlen) == NULL)
-						return e_dns_failed;
+						return ret;
 
 					svraddr_4.sin_family = AF_INET;
 					svraddr_4.sin_addr.s_addr = inet_addr(ip);
@@ -305,15 +339,15 @@ namespace shine
 					svraddr = &svraddr_4;
 				}
 				else if (sa->sa_family == AF_INET6) {
-					if (inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) sa)->sin6_addr), ip, maxlen) != 0)
-						return e_dns_failed;
+					if (inet_ntop(AF_INET6, &(((struct sockaddr_in6 *) sa)->sin6_addr), ip, maxlen) == 0)
+						return ret;
 
 					memset(&svraddr_6, 0, sizeof(svraddr_6));
 					svraddr_6.sin6_family = AF_INET6;
 					svraddr_6.sin6_port = htons(port);
 
 					if (inet_pton(AF_INET6, ip, &svraddr_6.sin6_addr) < 0)
-						return e_dns_failed;
+						return ret;
 
 					svraddr_len = sizeof(svraddr_6);
 					svraddr = &svraddr_6;
@@ -321,10 +355,31 @@ namespace shine
 
 				freeaddrinfo(result);
 
+				ret.assign((const char *)svraddr, svraddr_len);
+				return ret;
+			}
+
+			static connect_error_t connect(socket_t fd, const string &addr, uint32 timeout, string *addr_output = nullptr)
+			{
+				string sockaddr_data = addr_to_sockaddr(addr);
+				if (sockaddr_data.empty())
+				{
+					return e_dns_failed;
+				}
+
+				void* svraddr = (void*)sockaddr_data.data();
+				int32 svraddr_len = sockaddr_data.size();
+
 				set_noblock(fd, true);
 
 				connect_error_t ret = e_success;
+				if (addr_output != nullptr)
+				{
+					addr_output->assign((const char*)svraddr, svraddr_len);
+				}
 				if (::connect(fd, (struct sockaddr*)svraddr, svraddr_len) != 0)
+			   // if (::connect(fd, result->ai_addr, result->ai_addrlen) != 0)
+						
 				{
 					int32 err = get_error();
 #if (defined SHINE_OS_WINDOWS)
@@ -346,7 +401,8 @@ namespace shine
                             FD_ZERO(&wset);
                             FD_SET(fd, &wset);
 
-                            if (::select((int)fd + 1, NULL, &wset, NULL, &tv) == 1){
+							int rc = ::select((int)fd + 1, NULL, &wset, NULL, &tv);
+                            if (rc == 1){
                                 ret = FD_ISSET(fd, &wset) ? e_success : e_timeout;
                             }
                             
@@ -521,7 +577,6 @@ namespace shine
                 init();
                 socket_t s = invalid_socket;
 #if (defined SHINE_OS_WINDOWS)
-                af = PF_INET;
                 s = WSASocket(af, type, protocol, 0, 0, WSA_FLAG_OVERLAPPED);
 #else
                 s = ::socket(af, type, protocol);
@@ -599,7 +654,9 @@ namespace shine
                 e_send = 16,
                 e_close = 32,
                 e_exit = 64,
-            };
+				e_udp_accept = 128,
+				e_udp_connect = 256,
+			};
 
             static const size_type _recv_some = 1024;
             const size_type get_recv_some() const{ return _recv_some; }
@@ -624,6 +681,9 @@ namespace shine
                 e_acceptor = 0,
                 e_connector = 1,
                 e_connection = 2,
+				e_udp_acceptor = 3,
+				e_udp_connector = 4,
+				e_udp_connection = 5
             };
         public:
             peer(){
@@ -631,7 +691,7 @@ namespace shine
             }
             virtual ~peer(){}
 
-
+			SHINE_GEN_MEMBER_GETSET(bool, v6, = false);
             SHINE_GEN_MEMBER_GETSET(string, name);
             SHINE_GEN_MEMBER_GETSET(socket_t, socket_fd, = invalid_socket);
             SHINE_GEN_MEMBER_GETSET(uint32, recv_timeout, = 0);
